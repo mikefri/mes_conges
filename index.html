@@ -2,118 +2,177 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Gestion des Congés - Saisie</title>
+    <title>Gestion des Congés - Saisie & Configuration</title>
+    
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+    
     <style>
-        :root { --primary: #2c3e50; --bg: #f4f7f6; --sidebar-width: 350px; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); }
-        #sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid #ddd; padding: 20px; overflow-y: auto; }
-        .quota-card { background: #fff; border: 1px solid #eee; padding: 10px; border-left: 5px solid; margin-bottom: 10px; border-radius: 6px; }
+        :root { --primary: #2c3e50; --secondary: #95a5a6; --danger: #e74c3c; --bg: #f4f7f6; --sidebar-width: 350px; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden; }
+
+        #sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid #ddd; padding: 20px; overflow-y: auto; height: 100vh; box-sizing: border-box; }
+        h2, h3 { color: var(--primary); margin-top: 20px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+        
+        .quota-card { background: #fff; border: 1px solid #eee; padding: 10px; border-left: 5px solid; margin-bottom: 10px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .quota-val { font-size: 1.2em; font-weight: bold; }
+
         .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
-        button { cursor: pointer; background: var(--primary); color: white; border: none; padding: 10px; font-weight: bold; border-radius: 4px; }
-        #calendar-container { flex-grow: 1; padding: 20px; background: white; }
-        .btn-nav { background: #3498db; width: 100%; margin-top: 20px; text-decoration: none; display: block; text-align: center; color: white; padding: 10px; border-radius: 4px; }
+        label { font-size: 0.85em; font-weight: bold; color: #666; }
+        input, select, button { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { cursor: pointer; background: var(--primary); color: white; border: none; font-weight: bold; transition: 0.2s; }
+        
+        .btn-nav { background: #3498db; width: 100%; margin: 15px 0; text-decoration: none; display: block; text-align: center; color: white; padding: 12px; border-radius: 4px; font-weight: bold; box-sizing: border-box;}
+
+        #settings-content { background: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px dashed #ccc; margin-top: 10px; }
+        .type-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 5px; margin-bottom: 4px; border-radius: 4px; font-size: 0.85em; border: 1px solid #eee; }
+        .btn-toggle { background: var(--secondary); font-size: 0.7em; padding: 3px 6px; float: right; }
+
+        #calendar-container { flex-grow: 1; padding: 20px; background: white; overflow-y: auto; }
+        .fc-event-main { color: #000 !important; font-weight: bold !important; padding-left: 3px !important; }
     </style>
 </head>
 <body>
-    <div id="sidebar">
-        <h2>📊 Mes Quotas</h2>
-        <div id="quotas-display"></div>
-        <h3>📅 Poser un congé</h3>
-        <div class="form-group">
-            <label>Du :</label> <input type="date" id="start-date">
-            <label>Au :</label> <input type="date" id="end-date">
-            <select id="leave-type-select" onchange="checkType()">
-                <option value="">-- Type --</option>
-                <option value="AUTRE_INFO">💡 Info libre</option>
-            </select>
-            <div id="custom-info-group" style="display:none; margin-top:5px;">
-                <input type="text" id="custom-info-text" placeholder="Description">
-            </div>
-            <button onclick="addLeaveRange()" style="margin-top:10px;">Enregistrer</button>
-        </div>
-        
-        <a href="planning.html" class="btn-nav">👁️ Voir le Planning Annuel</a>
 
-        <h3>⚙️ Paramètres</h3>
-        <div id="settings" style="background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px dashed #ccc;">
-            <div id="types-list-admin"></div>
-            <div class="form-group">
-                <input type="text" id="new-type-name" placeholder="Nom">
-                <input type="number" id="new-type-quota" placeholder="Jours">
-                <input type="color" id="new-type-color" value="#e1ff00">
-                <button onclick="saveNewType()" style="background: #27ae60;">Ajouter</button>
-            </div>
-            <button onclick="localStorage.clear(); location.reload();" style="background:red; width:100%; font-size:10px;">Reset</button>
+<div id="sidebar">
+    <h2>📊 Mes Quotas</h2>
+    <div id="quotas-display"></div>
+
+    <a href="planning.html" class="btn-nav">👁️ VOIR LE PLANNING ANNUEL</a>
+
+    <h3>📅 Poser un congé</h3>
+    <div class="form-group">
+        <label>Du :</label> <input type="date" id="start-date">
+        <label>Au :</label> <input type="date" id="end-date">
+        <label>Type :</label>
+        <select id="leave-type-select" onchange="checkType()">
+            <option value="">-- Choisir --</option>
+            <option value="AUTRE_INFO">💡 Information libre</option>
+        </select>
+        <div id="custom-info-group" style="display:none; margin-top:5px;">
+            <input type="text" id="custom-info-text" placeholder="Ex: RDV Dentiste">
         </div>
+        <button onclick="addLeaveRange()" style="margin-top:10px;">Enregistrer</button>
     </div>
-    <div id="calendar-container"><div id="calendar"></div></div>
 
-    <script>
-        let config = JSON.parse(localStorage.getItem('leaveConfig')) || {};
-        let leaves = JSON.parse(localStorage.getItem('leavesData')) || [];
+    <h3>⚙️ Paramètres <button class="btn-toggle" onclick="toggleSettings()" id="toggle-btn">Afficher</button></h3>
+    <div id="settings-content" style="display: none;">
+        <div id="types-list-admin" style="margin-bottom: 10px;"></div>
+        <div class="form-group">
+            <input type="text" id="new-type-name" placeholder="Nom">
+            <input type="number" id="new-type-quota" placeholder="Jours">
+            <input type="color" id="new-type-color" value="#e1ff00">
+            <button onclick="saveNewType()" style="background: #27ae60;">Créer</button>
+        </div>
+        <button onclick="resetAll()" style="background:var(--danger); width:100%; font-size:10px;">Réinitialiser Tout</button>
+    </div>
+</div>
 
-        document.addEventListener('DOMContentLoaded', function() {
-            let calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-                initialView: 'dayGridMonth', locale: 'fr', firstDay: 1,
-                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,dayGridYear' },
-                events: leaves,
-                eventClick: function(info) {
-                    if(confirm("Supprimer ?")) {
-                        leaves = leaves.filter(l => !(l.start === info.event.startStr && l.title === info.event.title));
-                        save();
-                    }
+<div id="calendar-container">
+    <div id="calendar"></div>
+</div>
+
+<script>
+    let config = JSON.parse(localStorage.getItem('leaveConfig')) || {};
+    let leaves = JSON.parse(localStorage.getItem('leavesData')) || [];
+    let calendar;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+            initialView: 'dayGridMonth',
+            locale: 'fr',
+            firstDay: 1,
+            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,dayGridYear' },
+            events: leaves,
+            eventClick: function(info) {
+                if(confirm("Supprimer ce jour ?")) {
+                    leaves = leaves.filter(l => !(l.start === info.event.startStr && l.title === info.event.title));
+                    saveAndRefresh();
                 }
-            });
-            calendar.render();
-            updateUI();
-        });
-
-        function checkType() { document.getElementById('custom-info-group').style.display = (document.getElementById('leave-type-select').value === "AUTRE_INFO") ? "block" : "none"; }
-        
-        function saveNewType() {
-            const name = document.getElementById('new-type-name').value;
-            const quota = document.getElementById('new-type-quota').value;
-            const color = document.getElementById('new-type-color').value;
-            if(name && quota) { config[name] = { quota: parseInt(quota), color: color }; saveConfig(); }
-        }
-
-        function addLeaveRange() {
-            const start = document.getElementById('start-date').value;
-            const end = document.getElementById('end-date').value;
-            const typeKey = document.getElementById('leave-type-select').value;
-            if(!start || !end || !typeKey) return;
-            let cur = new Date(start);
-            while(cur <= new Date(end)) {
-                if(cur.getDay() !== 0 && cur.getDay() !== 6) {
-                    let isCustom = (typeKey === "AUTRE_INFO");
-                    leaves.push({
-                        title: isCustom ? document.getElementById('custom-info-text').value : typeKey,
-                        start: cur.toISOString().split('T')[0],
-                        backgroundColor: isCustom ? "#ecf0f1" : config[typeKey].color,
-                        isCustom: isCustom
-                    });
-                }
-                cur.setDate(cur.getDate() + 1);
             }
-            save();
-        }
+        });
+        calendar.render();
+        updateUI();
+    });
 
-        function updateUI() {
-            const display = document.getElementById('quotas-display');
-            const select = document.getElementById('leave-type-select');
-            const admin = document.getElementById('types-list-admin');
-            Object.keys(config).forEach(t => {
-                const used = leaves.filter(l => l.title === t && !l.isCustom).length;
-                display.innerHTML += `<div class="quota-card" style="border-left-color:${config[t].color}"><strong>${t}</strong>: ${config[t].quota - used}j</div>`;
-                select.innerHTML += `<option value="${t}">${t}</option>`;
-                admin.innerHTML += `<div style="font-size:11px;">${t} <button onclick="deleteType('${t}')" style="background:none; color:red; padding:0;">🗑️</button></div>`;
-            });
+    function toggleSettings() {
+        const content = document.getElementById('settings-content');
+        content.style.display = (content.style.display === "none") ? "block" : "none";
+        document.getElementById('toggle-btn').innerText = (content.style.display === "none") ? "Afficher" : "Masquer";
+    }
+
+    function checkType() {
+        document.getElementById('custom-info-group').style.display = (document.getElementById('leave-type-select').value === "AUTRE_INFO") ? "block" : "none";
+    }
+
+    function saveNewType() {
+        const name = document.getElementById('new-type-name').value.trim();
+        const quota = document.getElementById('new-type-quota').value;
+        const color = document.getElementById('new-type-color').value;
+        if(name && quota) {
+            config[name] = { quota: parseInt(quota), color: color };
+            localStorage.setItem('leaveConfig', JSON.stringify(config));
+            location.reload();
         }
-        function deleteType(t) { delete config[t]; saveConfig(); }
-        function saveConfig() { localStorage.setItem('leaveConfig', JSON.stringify(config)); location.reload(); }
-        function save() { localStorage.setItem('leavesData', JSON.stringify(leaves)); location.reload(); }
-    </script>
+    }
+
+    function removeType(t) {
+        if(confirm(`Supprimer le type "${t}" ?`)) {
+            leaves = leaves.filter(l => l.title !== t);
+            delete config[t];
+            saveAndRefresh();
+        }
+    }
+
+    function addLeaveRange() {
+        const start = document.getElementById('start-date').value;
+        const end = document.getElementById('end-date').value;
+        const typeSelect = document.getElementById('leave-type-select').value;
+        if(!start || !end || !typeSelect) return;
+
+        let cur = new Date(start);
+        let last = new Date(end);
+        while(cur <= last) {
+            if(cur.getDay() !== 0 && cur.getDay() !== 6) {
+                let isCustom = (typeSelect === "AUTRE_INFO");
+                leaves.push({
+                    title: isCustom ? document.getElementById('custom-info-text').value : typeSelect,
+                    start: cur.toISOString().split('T')[0],
+                    backgroundColor: isCustom ? "#ecf0f1" : config[typeSelect].color,
+                    borderColor: "#ddd",
+                    allDay: true,
+                    isCustom: isCustom
+                });
+            }
+            cur.setDate(cur.getDate() + 1);
+        }
+        saveAndRefresh();
+    }
+
+    function updateUI() {
+        const display = document.getElementById('quotas-display');
+        const select = document.getElementById('leave-type-select');
+        const admin = document.getElementById('types-list-admin');
+        const types = Object.keys(config);
+
+        display.innerHTML = '';
+        admin.innerHTML = '<strong>Types existants :</strong>';
+
+        types.forEach(t => {
+            const used = leaves.filter(l => l.title === t && !l.isCustom).length;
+            display.innerHTML += `
+                <div class="quota-card" style="border-left-color:${config[t].color}">
+                    <strong>${t}</strong>: <span class="quota-val">${config[t].quota - used}</span> / ${config[t].quota}j
+                </div>`;
+            
+            let opt = document.createElement('option'); opt.value = t; opt.innerText = t; select.appendChild(opt);
+            admin.innerHTML += `
+                <div class="type-item"><span>${t}</span><button onclick="removeType('${t}')" style="background:none; color:red; padding:0;">🗑️</button></div>`;
+        });
+    }
+
+    function saveAndRefresh() { localStorage.setItem('leavesData', JSON.stringify(leaves)); location.reload(); }
+    function resetAll() { if(confirm("Tout effacer ?")) { localStorage.clear(); location.reload(); } }
+</script>
 </body>
 </html>
