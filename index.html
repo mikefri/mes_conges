@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestionnaire de Congés</title>
+    <title>Gestionnaire de Congés Complet</title>
     
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
@@ -37,6 +37,8 @@
         }
 
         h2, h3 { color: var(--primary); margin-top: 25px; }
+        h2:first-child { margin-top: 0; }
+
         .quota-card {
             background: #fff;
             border: 1px solid #eee;
@@ -44,36 +46,44 @@
             border-left: 5px solid;
             margin-bottom: 10px;
             border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-        .quota-val { font-size: 1.4em; font-weight: bold; }
+        .quota-val { font-size: 1.4em; font-weight: bold; color: var(--primary); }
 
         .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
-        input, select, button { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        label { font-size: 0.9em; font-weight: 600; color: #555; }
+        input, select, button { padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+        
         button { cursor: pointer; background: var(--primary); color: white; border: none; font-weight: bold; }
+        button:hover { opacity: 0.9; }
 
-        #settings-content { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-top: 10px; }
-        .btn-toggle { background: var(--secondary); font-size: 0.7em; padding: 4px 8px; float: right; }
-        
-        #calendar-container { flex-grow: 1; padding: 25px; background: white; overflow-y: auto; }
-        
-        /* STYLE POUR LE TEXTE DANS LES BARRES */
-        .fc-event-title {
-            font-weight: bold !important;
-            font-size: 0.85em !important;
-            padding: 2px 5px !important;
-            color: #000 !important; /* Texte en noir pour être lisible sur le jaune/vert */
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            overflow: hidden;
+        #settings-content {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed #ccc;
+            margin-top: 10px;
         }
-        
-        .fc-v-event, .fc-h-event {
-            border: 1px solid rgba(0,0,0,0.1) !important;
+        .btn-toggle { background: var(--secondary); font-size: 0.7em; padding: 4px 8px; float: right; }
+        .btn-delete { background: var(--danger); margin-top: 20px; width: 100%; }
+
+        #calendar-container { flex-grow: 1; padding: 25px; background: white; overflow-y: auto; }
+        #calendar { height: 100%; }
+
+        /* FIX POUR LE TEXTE DANS LES BARRES */
+        .fc-event-main {
+            color: #000 !important; /* Texte noir pour lisibilité */
+            font-weight: bold !important;
+            padding-left: 4px !important;
+        }
+        .fc-event-title {
+            display: inline-block !important;
+            vertical-align: middle !important;
         }
 
         @media (max-width: 800px) {
             body { flex-direction: column; }
-            #sidebar { width: auto; height: auto; }
+            #sidebar { width: auto; height: auto; border-right: none; border-bottom: 1px solid #ddd; }
         }
     </style>
 </head>
@@ -85,21 +95,27 @@
 
     <h3>📅 Poser un congé</h3>
     <div class="form-group">
-        <label>Début :</label><input type="date" id="start-date">
-        <label>Fin :</label><input type="date" id="end-date">
-        <label>Type :</label><select id="leave-type-select"></select>
-        <button onclick="addLeaveRange()">Enregistrer</button>
+        <label>Date de début :</label>
+        <input type="date" id="start-date">
+        <label>Date de fin :</label>
+        <input type="date" id="end-date">
+        <label>Type :</label>
+        <select id="leave-type-select"></select>
+        <button onclick="addLeaveRange()">Enregistrer le congé</button>
     </div>
 
     <h3>⚙️ Paramétrage <button class="btn-toggle" onclick="toggleSettings()" id="toggle-btn">Afficher</button></h3>
     <div id="settings-content" style="display: none;">
         <div class="form-group">
-            <label>Nom du congé :</label><input type="text" id="new-type-name" placeholder="Ex: Congés Été">
-            <label>Quota :</label><input type="number" id="new-type-quota">
-            <label>Couleur :</label><input type="color" id="new-type-color" value="#e1ff00">
-            <button onclick="saveNewType()" style="background: #27ae60;">Ajouter</button>
+            <label>Nom du type :</label>
+            <input type="text" id="new-type-name" placeholder="Ex: Congés Payés">
+            <label>Quota annuel :</label>
+            <input type="number" id="new-type-quota" placeholder="25">
+            <label>Couleur :</label>
+            <input type="color" id="new-type-color" value="#e1ff00">
+            <button onclick="saveNewType()" style="background: #27ae60;">Ajouter ce type</button>
         </div>
-        <button onclick="resetAll()" style="background:var(--danger); width:100%; margin-top:10px;">Réinitialiser tout</button>
+        <button class="btn-delete" onclick="resetAll()">Vider toutes les données</button>
     </div>
 </div>
 
@@ -114,23 +130,30 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         const calendarEl = document.getElementById('calendar');
+        
         calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             locale: 'fr',
             firstDay: 1,
-            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,dayGridYear' },
-            events: leaves,
-            // Force l'affichage du titre
-            eventDidMount: function(info) {
-                info.el.title = info.event.title; // Tooltip au survol
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,dayGridYear' // Rétablissement de la vue annuelle
             },
+            buttonText: {
+                today: 'Aujourd\'hui',
+                month: 'Mois',
+                year: 'Année'
+            },
+            events: leaves,
             eventClick: function(info) {
-                if(confirm(`Supprimer ce jour ?`)) {
+                if(confirm(`Supprimer ce jour de congé ?`)) {
                     leaves = leaves.filter(l => !(l.start === info.event.startStr && l.title === info.event.title));
                     saveAndRefresh();
                 }
             }
         });
+        
         calendar.render();
         updateUI();
     });
@@ -138,8 +161,13 @@
     function toggleSettings() {
         const content = document.getElementById('settings-content');
         const btn = document.getElementById('toggle-btn');
-        content.style.display = (content.style.display === "none") ? "block" : "none";
-        btn.innerText = (content.style.display === "none") ? "Afficher" : "Masquer";
+        if (content.style.display === "none") {
+            content.style.display = "block";
+            btn.innerText = "Masquer";
+        } else {
+            content.style.display = "none";
+            btn.innerText = "Afficher";
+        }
     }
 
     function saveNewType() {
@@ -147,6 +175,7 @@
         const quota = document.getElementById('new-type-quota').value;
         const color = document.getElementById('new-type-color').value;
         if(!name || !quota) return;
+        
         config[name] = { quota: parseInt(quota), color: color };
         localStorage.setItem('leaveConfig', JSON.stringify(config));
         updateUI();
@@ -156,15 +185,21 @@
         const start = document.getElementById('start-date').value;
         const end = document.getElementById('end-date').value;
         const type = document.getElementById('leave-type-select').value;
-        if(!type || !start || !end) return;
+        
+        if(!type || !start || !end || start > end) {
+            alert("Sélectionnez des dates valides et un type de congé.");
+            return;
+        }
 
         let current = new Date(start);
         let last = new Date(end);
+        
         while(current <= last) {
             if(current.getDay() !== 0 && current.getDay() !== 6) {
+                let dateStr = current.toISOString().split('T')[0];
                 leaves.push({
-                    title: type, // C'est ce texte qui s'affichera dans la barre
-                    start: current.toISOString().split('T')[0],
+                    title: type,
+                    start: dateStr,
                     backgroundColor: config[type].color,
                     borderColor: config[type].color,
                     allDay: true
@@ -180,14 +215,23 @@
         const select = document.getElementById('leave-type-select');
         display.innerHTML = '';
         select.innerHTML = '';
+
         const types = Object.keys(config);
         if(types.length === 0) {
-            display.innerHTML = '<p style="color:gray">Aucun type configuré.</p>';
+            display.innerHTML = '<p style="color:gray; font-style:italic;">Aucun type configuré.</p>';
         } else {
             types.forEach(type => {
                 const used = leaves.filter(l => l.title === type).length;
-                display.innerHTML += `<div class="quota-card" style="border-left-color:${config[type].color}"><strong>${type}</strong>: ${config[type].quota - used} / ${config[type].quota} j</div>`;
-                select.innerHTML += `<option value="${type}">${type}</option>`;
+                display.innerHTML += `
+                    <div class="quota-card" style="border-left-color: ${config[type].color}">
+                        <strong>${type}</strong><br>
+                        <span class="quota-val">${config[type].quota - used}</span> / ${config[type].quota} j restants
+                    </div>`;
+                
+                const opt = document.createElement('option');
+                opt.value = type;
+                opt.innerText = type;
+                select.appendChild(opt);
             });
         }
     }
@@ -198,8 +242,12 @@
     }
 
     function resetAll() {
-        if(confirm("Tout effacer ?")) { localStorage.clear(); location.reload(); }
+        if(confirm("Attention : cela supprimera tout (types et jours posés).")) {
+            localStorage.clear();
+            location.reload();
+        }
     }
 </script>
+
 </body>
 </html>
