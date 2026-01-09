@@ -85,12 +85,28 @@
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,dayGridYear' },
             events: leaves,
             eventClick: function(info) {
+                if(info.event.display === 'background') return; // Ne pas supprimer les jours fériés
                 if(confirm("Supprimer ce jour ?")) {
                     leaves = leaves.filter(l => !(l.start === info.event.startStr && l.title === info.event.title));
                     saveAndRefresh();
                 }
             }
         });
+        
+        // Ajout automatique des jours fériés
+        fetch(`https://calendrier.etamine.pub/api/v1/jours-feries/${new Date().getFullYear()}`)
+            .then(res => res.json())
+            .then(data => {
+                const holidayEvents = Object.keys(data).map(dateStr => ({
+                    title: data[dateStr],
+                    start: dateStr,
+                    allDay: true,
+                    display: 'background',
+                    backgroundColor: '#e0e0e0'
+                }));
+                calendar.addEventSource(holidayEvents);
+            });
+
         calendar.render();
         updateUI();
     });
