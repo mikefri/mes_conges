@@ -2,34 +2,24 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Gestion des Congés - Saisie & Configuration</title>
-    
+    <title>Gestion des Congés - Version Intégrale</title>
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
-    
     <style>
         :root { --primary: #2c3e50; --secondary: #95a5a6; --danger: #e74c3c; --bg: #f4f7f6; --sidebar-width: 350px; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden; }
-
-        #sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid #ddd; padding: 20px; overflow-y: auto; height: 100vh; box-sizing: border-box; }
+        #sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid #ddd; padding: 20px; overflow-y: auto; box-sizing: border-box; }
         h2, h3 { color: var(--primary); margin-top: 20px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
-        
         .quota-card { background: #fff; border: 1px solid #eee; padding: 10px; border-left: 5px solid; margin-bottom: 10px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .quota-val { font-size: 1.2em; font-weight: bold; }
-
         .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
-        label { font-size: 0.85em; font-weight: bold; color: #666; }
         input, select, button { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-        button { cursor: pointer; background: var(--primary); color: white; border: none; font-weight: bold; transition: 0.2s; }
-        
+        button { cursor: pointer; background: var(--primary); color: white; border: none; font-weight: bold; }
         .btn-nav { background: #3498db; width: 100%; margin: 15px 0; text-decoration: none; display: block; text-align: center; color: white; padding: 12px; border-radius: 4px; font-weight: bold; box-sizing: border-box;}
-
         #settings-content { background: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px dashed #ccc; margin-top: 10px; }
         .type-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 5px; margin-bottom: 4px; border-radius: 4px; font-size: 0.85em; border: 1px solid #eee; }
-        .btn-toggle { background: var(--secondary); font-size: 0.7em; padding: 3px 6px; float: right; }
-
+        .btn-toggle { background: var(--secondary); font-size: 0.7em; padding: 3px 6px; float: right; cursor: pointer; border-radius: 3px; }
         #calendar-container { flex-grow: 1; padding: 20px; background: white; overflow-y: auto; }
-        .fc-event-main { color: #000 !important; font-weight: bold !important; padding-left: 3px !important; }
+        .fc-event-main { color: #000 !important; font-weight: bold !important; }
     </style>
 </head>
 <body>
@@ -37,14 +27,12 @@
 <div id="sidebar">
     <h2>📊 Mes Quotas</h2>
     <div id="quotas-display"></div>
-
     <a href="planning.html" class="btn-nav">👁️ VOIR LE PLANNING MATRIX</a>
 
     <h3>📅 Poser un congé</h3>
     <div class="form-group">
         <label>Du :</label> <input type="date" id="start-date">
         <label>Au :</label> <input type="date" id="end-date">
-        <label>Type :</label>
         <select id="leave-type-select" onchange="checkType()">
             <option value="">-- Choisir --</option>
             <option value="AUTRE_INFO">💡 Information libre</option>
@@ -55,7 +43,7 @@
         <button onclick="addLeaveRange()" style="margin-top:10px;">Enregistrer</button>
     </div>
 
-    <h3>⚙️ Paramètres <button class="btn-toggle" onclick="toggleSettings()" id="toggle-btn">Afficher</button></h3>
+    <h3>⚙️ Paramètres <span class="btn-toggle" onclick="toggleSettings()" id="toggle-btn">Afficher</span></h3>
     <div id="settings-content" style="display: none;">
         <div id="types-list-admin" style="margin-bottom: 10px;"></div>
         <div class="form-group">
@@ -64,35 +52,47 @@
             <input type="color" id="new-type-color" value="#e1ff00">
             <button onclick="saveNewType()" style="background: #27ae60;">+ Créer Type</button>
         </div>
-        <button onclick="resetAll()" style="background:var(--danger); width:100%; font-size:10px;">RÉINITIALISER TOUT</button>
+        <button onclick="resetAll()" style="background:var(--danger); width:100%; font-size:10px; margin-top:10px;">RÉINITIALISER TOUT</button>
     </div>
 </div>
 
-<div id="calendar-container">
-    <div id="calendar"></div>
-</div>
+<div id="calendar-container"><div id="calendar"></div></div>
 
 <script>
     let config = JSON.parse(localStorage.getItem('leaveConfig')) || {};
     let leaves = JSON.parse(localStorage.getItem('leavesData')) || [];
     let calendar;
 
+    // Calcul mathématique des jours fériés français
+    function getHolidays(y) {
+        const paques = (year) => {
+            const a = year % 19, b = Math.floor(year / 100), c = year % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451), n = Math.floor((h + l - 7 * m + 114) / 31), p = (h + l - 7 * m + 114) % 31;
+            return new Date(year, n - 1, p + 1);
+        };
+        const p = paques(y);
+        const add = (d, n) => { let res = new Date(d); res.setDate(res.getDate() + n); return res.toISOString().split('T')[0]; };
+        return {
+            [`${y}-01-01`]: "Jour An", [add(p, 0)]: "Pâques", [add(p, 1)]: "L.Pâques", [`${y}-05-01`]: "Fête Trav.", [`${y}-05-08`]: "Victoire", [add(p, 39)]: "Ascension", [add(p, 50)]: "L.Pentec.", [`${y}-07-14`]: "Fête Nat.", [`${y}-08-15`]: "Assompt.", [`${y}-11-01`]: "Toussaint", [`${y}-11-11`]: "Armistice", [`${y}-12-25`]: "Noël"
+        };
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-            initialView: 'dayGridMonth',
-            locale: 'fr',
-            firstDay: 1,
+            initialView: 'dayGridMonth', locale: 'fr', firstDay: 1,
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,dayGridYear' },
             events: leaves,
-            // Recharge les fériés quand on change de vue (mois/année)
             datesSet: function(info) {
-                loadHolidays(info.view.currentStart.getFullYear());
+                const year = info.view.currentStart.getFullYear();
+                const h = getHolidays(year);
+                const source = calendar.getEventSourceById('feries');
+                if(source) source.remove();
+                calendar.addEventSource({ id: 'feries', events: Object.keys(h).map(d => ({ title: h[d], start: d, display: 'background', backgroundColor: '#e0e0e0' })) });
             },
             eventClick: function(info) {
                 if(info.event.display === 'background') return;
                 if(confirm("Supprimer ce jour ?")) {
                     leaves = leaves.filter(l => !(l.start === info.event.startStr && l.title === info.event.title));
-                    saveAndRefresh();
+                    save();
                 }
             }
         });
@@ -100,116 +100,64 @@
         updateUI();
     });
 
-    // Fonction pour charger les fériés depuis l'API sans sélecteur (basé sur la vue du calendrier)
-    async function loadHolidays(year) {
-        try {
-            const res = await fetch(`https://calendrier.etamine.pub/api/v1/jours-feries/${year}`);
-            if(!res.ok) return;
-            const data = await res.json();
-            
-            // On retire les anciens fériés
-            const oldSource = calendar.getEventSourceById('feries');
-            if(oldSource) oldSource.remove();
-
-            const holidayEvents = Object.keys(data).map(d => ({
-                title: data[d],
-                start: d,
-                display: 'background',
-                backgroundColor: '#e0e0e0'
-            }));
-            
-            calendar.addEventSource({ id: 'feries', events: holidayEvents });
-        } catch(e) { console.error("Erreur API fériés"); }
-    }
-
     function toggleSettings() {
-        const content = document.getElementById('settings-content');
-        content.style.display = (content.style.display === "none") ? "block" : "none";
-        document.getElementById('toggle-btn').innerText = (content.style.display === "none") ? "Afficher" : "Masquer";
+        const c = document.getElementById('settings-content');
+        const isHidden = c.style.display === "none";
+        c.style.display = isHidden ? "block" : "none";
+        document.getElementById('toggle-btn').innerText = isHidden ? "Masquer" : "Afficher";
     }
 
-    function checkType() {
-        document.getElementById('custom-info-group').style.display = (document.getElementById('leave-type-select').value === "AUTRE_INFO") ? "block" : "none";
-    }
-
+    function checkType() { document.getElementById('custom-info-group').style.display = (document.getElementById('leave-type-select').value === "AUTRE_INFO") ? "block" : "none"; }
+    
     function saveNewType() {
         const name = document.getElementById('new-type-name').value.trim();
         const quota = document.getElementById('new-type-quota').value;
-        const color = document.getElementById('new-type-color').value;
-        if(name && quota) {
-            config[name] = { quota: parseInt(quota), color: color };
-            localStorage.setItem('leaveConfig', JSON.stringify(config));
-            location.reload();
+        if(name && quota) { 
+            config[name] = { quota: parseInt(quota), color: document.getElementById('new-type-color').value }; 
+            localStorage.setItem('leaveConfig', JSON.stringify(config)); 
+            location.reload(); 
         }
     }
 
     function removeType(t) {
-        if(confirm(`Supprimer le type "${t}" et les jours associés ?`)) {
+        if(confirm(`Supprimer le type "${t}" ?`)) {
             leaves = leaves.filter(l => l.title !== t);
             delete config[t];
-            saveAndRefresh();
+            save();
         }
     }
 
     function addLeaveRange() {
-        const start = document.getElementById('start-date').value;
-        const end = document.getElementById('end-date').value;
-        const typeSelect = document.getElementById('leave-type-select').value;
-        if(!start || !end || !typeSelect) return;
-
+        const start = document.getElementById('start-date').value, end = document.getElementById('end-date').value, type = document.getElementById('leave-type-select').value;
+        if(!start || !end || !type) return;
         let cur = new Date(start);
-        let last = new Date(end);
-        while(cur <= last) {
+        while(cur <= new Date(end)) {
             if(cur.getDay() !== 0 && cur.getDay() !== 6) {
-                let isCustom = (typeSelect === "AUTRE_INFO");
-                leaves.push({
-                    title: isCustom ? document.getElementById('custom-info-text').value : typeSelect,
-                    start: cur.toISOString().split('T')[0],
-                    backgroundColor: isCustom ? "#ecf0f1" : config[typeSelect].color,
+                let isCustom = (type === "AUTRE_INFO");
+                leaves.push({ 
+                    title: isCustom ? document.getElementById('custom-info-text').value : type, 
+                    start: cur.toISOString().split('T')[0], 
+                    backgroundColor: isCustom ? "#ecf0f1" : config[type].color,
                     borderColor: "#ddd",
-                    isCustom: isCustom
+                    isCustom: isCustom 
                 });
             }
             cur.setDate(cur.getDate() + 1);
         }
-        saveAndRefresh();
+        save();
     }
 
     function updateUI() {
-        const display = document.getElementById('quotas-display');
-        const select = document.getElementById('leave-type-select');
-        const admin = document.getElementById('types-list-admin');
-        
-        display.innerHTML = '';
-        admin.innerHTML = '<strong>Types existants :</strong>';
-
+        const d = document.getElementById('quotas-display'), s = document.getElementById('leave-type-select'), a = document.getElementById('types-list-admin');
         Object.keys(config).forEach(t => {
             const used = leaves.filter(l => l.title === t && !l.isCustom).length;
-            display.innerHTML += `
-                <div class="quota-card" style="border-left-color:${config[t].color}">
-                    <strong>${t}</strong>: <span class="quota-val">${config[t].quota - used}</span> / ${config[t].quota}j
-                </div>`;
-            
-            let opt = document.createElement('option');
-            opt.value = t; opt.innerText = t;
-            select.appendChild(opt);
-
-            admin.innerHTML += `
-                <div class="type-item">
-                    <span>${t} (${config[t].quota}j)</span>
-                    <button onclick="removeType('${t}')" style="background:none; color:red; padding:0; border:none; cursor:pointer;">🗑️</button>
-                </div>`;
+            d.innerHTML += `<div class="quota-card" style="border-left-color:${config[t].color}"><strong>${t}</strong>: ${config[t].quota - used} / ${config[t].quota}j</div>`;
+            s.innerHTML += `<option value="${t}">${t}</option>`;
+            a.innerHTML += `<div class="type-item"><span>${t}</span><button onclick="removeType('${t}')" style="background:none;color:red;border:none;cursor:pointer">🗑️</button></div>`;
         });
     }
-
-    function saveAndRefresh() { 
-        localStorage.setItem('leavesData', JSON.stringify(leaves)); 
-        location.reload(); 
-    }
-
-    function resetAll() { 
-        if(confirm("Tout effacer ?")) { localStorage.clear(); location.reload(); } 
-    }
+    function save() { localStorage.setItem('leavesData', JSON.stringify(leaves)); location.reload(); }
+    function resetAll() { if(confirm("Tout effacer ?")) { localStorage.clear(); location.reload(); } }
 </script>
 </body>
 </html>
