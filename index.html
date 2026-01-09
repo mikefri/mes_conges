@@ -2,8 +2,40 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Mon Planning Congés</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MonPlanning">
+<meta name="theme-color" content="#2c3e50">
+
+<title>Mon Planning Congés</title>
+<meta name="description" content="Gérez vos congés, RTT et plannings annuels de manière simple et sécurisée avec cette interface PWA légère.">
+<meta name="keywords" content="planning, congés, RTT, gestion vacances, calendrier interactif, PWA">
+<meta name="author" content="Mikefri">
+<meta name="robots" content="index, follow">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://mikefri.github.io/Projet_Conges/index.html">
+<meta property="og:title" content="🌴 Mon Planning Congés">
+<meta property="og:description" content="L'interface web rapide pour organiser vos vacances. Installez-la sur votre écran d'accueil.">
+<meta property="og:image" content="icon.png">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Mon Planning Congés">
+<meta name="twitter:description" content="Organisez vos jours de repos en toute simplicité.">
+<meta name="twitter:image" content="icon.png">
+
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" type="image/png" href="icon.png">
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log("Service Worker Planning Enregistré"));
+  }
+</script>
+
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
