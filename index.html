@@ -10,7 +10,7 @@
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: #333; }
         
         /* AUTH */
-        #auth-container { display: flex; justify-content: center; align-items: center; height: 100vh; background: var(--primary); }
+        #auth-container { display: flex; justify-content: center; align-items: center; height: 100vh; background: var(--primary); position: fixed; width: 100%; top: 0; z-index: 9999; }
         .auth-box { background: white; padding: 30px; border-radius: 12px; width: 320px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
         .auth-box input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
         .auth-box button { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
@@ -18,15 +18,17 @@
 
         /* APP LAYOUT */
         #main-app { display: none; }
-        .app-container { display: flex; height: 100vh; }
+        .app-container { display: flex; height: calc(100vh - 60px); }
         #sidebar { width: 350px; background: white; border-right: 1px solid #ddd; padding: 20px; overflow-y: auto; }
-        #calendar-container { flex-grow: 1; padding: 20px; background: white; }
+        #calendar-container { flex-grow: 1; padding: 20px; background: white; overflow-y: auto; }
         
-        .header { background: white; padding: 10px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
+        .header { background: white; padding: 10px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; height: 60px; box-sizing: border-box; }
         .quota-card { background: #fff; border: 1px solid #eee; padding: 12px; margin-bottom: 10px; border-radius: 6px; border-left: 7px solid #ccc; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .btn-action { width: 100%; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
         #settings-content { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-top: 10px; }
         .btn-toggle { font-size: 0.7em; background: #95a5a6; color: white; padding: 3px 8px; border-radius: 3px; cursor: pointer; float: right; }
+        
+        input[type="date"], select { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -53,10 +55,11 @@
             
             <hr>
             <h3>📅 Poser un congé</h3>
-            <label>Du :</label> <input type="date" id="start-date" style="width:100%;">
-            <label>Au :</label> <input type="date" id="end-date" style="width:100%;">
-            <select id="leave-type-select" style="width:100%; padding:8px; margin-top:10px;"></select>
-            <div id="custom-info-group" style="display:none; margin-top:10px;">
+            <label>Du :</label> <input type="date" id="start-date">
+            <label>Au :</label> <input type="date" id="end-date">
+            <label>Type :</label>
+            <select id="leave-type-select" onchange="window.checkType()"></select>
+            <div id="custom-info-group" style="display:none;">
                 <input type="text" id="custom-info-text" placeholder="Titre (ex: Formation)">
             </div>
             <button class="btn-action" id="add-leave-btn">Enregistrer</button>
@@ -64,10 +67,10 @@
             <h3 style="margin-top:30px;">⚙️ Paramètres <span class="btn-toggle" id="toggle-settings-btn">Afficher</span></h3>
             <div id="settings-content" style="display:none;">
                 <div id="types-list-admin"></div>
-                <h4 style="margin-bottom:5px;">Nouveau type :</h4>
+                <h4 style="margin-bottom:5px; margin-top:15px;">Nouveau type :</h4>
                 <input type="text" id="new-type-name" placeholder="Nom (ex: RTT)">
                 <input type="number" id="new-type-quota" placeholder="Nb jours">
-                <input type="color" id="new-type-color" value="#3498db" style="height:40px;">
+                <input type="color" id="new-type-color" value="#3498db" style="height:40px; cursor:pointer;">
                 <button class="btn-action" id="save-type-btn" style="background:#27ae60;">+ Créer</button>
             </div>
         </div>
@@ -80,7 +83,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyB0uDfGAHq99p1VqRNj9pap-E7J52JlQ3w",
@@ -95,9 +98,9 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
     let calendar;
-    let userData = { leaves: [], config: {} };
+    let userData = { leaves: [], config: { "CP": {quota:25, color:"#3498db"}, "RTT": {quota:10, color:"#e1ff00"} } };
 
-    // --- FERIES ---
+    // --- JOURS FERIES ---
     function getHolidays(y) {
         const a=y%19, b=Math.floor(y/100), c=y%100, d=Math.floor(b/4), e=b%4, f=Math.floor((b+8)/25), g=Math.floor((b-f+1)/3), h=(19*a+b-d-g+15)%30, i=Math.floor(c/4), k=c%4, l=(32+2*e+2*i-h-k)%7, m=Math.floor((a+11*h+22*l)/451), n=Math.floor((h+l-7*m+114)/31), p=(h+l-7*m+114)%31;
         const paques = new Date(y, n-1, p+1);
@@ -105,22 +108,21 @@
         return { [`${y}-01-01`]:"An", [add(paques,0)]:"Pâques", [add(paques,1)]:"L.Pâques", [`${y}-05-01`]:"Travail", [`${y}-05-08`]:"Victoire", [add(paques,39)]:"Ascension", [add(paques,50)]:"L.Pentec.", [`${y}-07-14`]:"Nat.", [`${y}-08-15`]:"Assompt.", [`${y}-11-01`]:"Toussaint", [`${y}-11-11`]:"Armistice", [`${y}-12-25`]:"Noël" };
     }
 
-    // --- BRANCHEMENT BOUTONS ---
-    document.getElementById('toggle-auth').addEventListener('click', () => {
+    // --- AUTHENTIFICATION ---
+    document.getElementById('toggle-auth').onclick = () => {
         const t = document.getElementById('auth-title'), b = document.getElementById('auth-btn'), l = document.getElementById('toggle-auth');
         if(b.innerText === "Se connecter") { t.innerText="Inscription"; b.innerText="Créer mon compte"; l.innerText="Déjà inscrit ? Connexion"; }
         else { t.innerText="Connexion"; b.innerText="Se connecter"; l.innerText="Pas de compte ? Créer un profil"; }
-    });
+    };
 
-    document.getElementById('auth-btn').addEventListener('click', async () => {
+    document.getElementById('auth-btn').onclick = async () => {
         const e = document.getElementById('email').value, p = document.getElementById('password').value;
         try {
             if(document.getElementById('auth-btn').innerText === "Se connecter") await signInWithEmailAndPassword(auth, e, p);
             else await createUserWithEmailAndPassword(auth, e, p);
         } catch(err) { alert("Erreur : " + err.message); }
-    });
+    };
 
-    // --- APP CORE ---
     onAuthStateChanged(auth, (user) => {
         if(user) {
             document.getElementById('auth-container').style.display='none';
@@ -130,6 +132,7 @@
         }
     });
 
+    // --- CORE APP ---
     function initApp(uid) {
         if(!calendar) {
             calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
@@ -156,8 +159,7 @@
                 userData = snap.data();
                 updateUI(uid);
             } else {
-                const init = { leaves: [], config: { "CP": {quota:25, color:"#3498db"}, "RTT": {quota:10, color:"#e1ff00"} } };
-                setDoc(doc(db, "users", uid), init);
+                setDoc(doc(db, "users", uid), userData);
             }
         });
     }
@@ -169,33 +171,39 @@
         Object.keys(userData.config).forEach(t => {
             const used = userData.leaves.filter(l => l.title === t && !l.isCustom).length;
             const rem = userData.config[t].quota - used;
-            d.innerHTML += `<div class="quota-card" style="border-left-color:${userData.config[t].color}"><strong>${t}</strong> <span>${rem}/${userData.config[t].quota}j</span></div>`;
+            d.innerHTML += `<div class="quota-card" style="border-left-color:${userData.config[t].color}"><strong>${t}</strong> <span style="font-weight:bold;">${rem}/${userData.config[t].quota}j</span></div>`;
             s.innerHTML += `<option value="${t}">${t}</option>`;
-            a.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>${t}</span> <button onclick="window.delType('${t}')" style="color:red; background:none; border:none; cursor:pointer;">🗑️</button></div>`;
+            a.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; background:white; padding:5px; border-radius:4px; border:1px solid #eee;"><span>${t}</span> <button onclick="window.delType('${t}')" style="color:red; background:none; border:none; cursor:pointer;">🗑️</button></div>`;
         });
         calendar.removeAllEvents();
         calendar.addEventSource(userData.leaves);
     }
 
-    // --- ACTIONS ---
-    document.getElementById('leave-type-select').onchange = (e) => document.getElementById('custom-info-group').style.display = (e.target.value === 'AUTRE') ? 'block' : 'none';
-    
+    // --- ACTIONS GLOBALES ---
+    window.checkType = () => {
+        const type = document.getElementById('leave-type-select').value;
+        document.getElementById('custom-info-group').style.display = (type === 'AUTRE') ? 'block' : 'none';
+    };
+
     document.getElementById('toggle-settings-btn').onclick = () => {
         const s = document.getElementById('settings-content');
-        s.style.display = (s.style.display === 'none') ? 'block' : 'none';
-        document.getElementById('toggle-settings-btn').innerText = (s.style.display === 'none') ? 'Afficher' : 'Masquer';
+        const isHidden = s.style.display === 'none';
+        s.style.display = isHidden ? 'block' : 'none';
+        document.getElementById('toggle-settings-btn').innerText = isHidden ? 'Masquer' : 'Afficher';
     };
 
     document.getElementById('save-type-btn').onclick = async () => {
-        const n = document.getElementById('new-type-name').value, q = document.getElementById('new-type-quota').value, c = document.getElementById('new-type-color').value;
+        const n = document.getElementById('new-type-name').value.trim(), q = document.getElementById('new-type-quota').value, c = document.getElementById('new-type-color').value;
         if(n && q) {
             userData.config[n] = { quota: parseInt(q), color: c };
             await setDoc(doc(db, "users", auth.currentUser.uid), userData);
+            document.getElementById('new-type-name').value = '';
+            document.getElementById('new-type-quota').value = '';
         }
     };
 
     window.delType = async (t) => {
-        if(confirm("Supprimer ce type et ses congés ?")) {
+        if(confirm(`Supprimer le type "${t}" et tous les congés associés ?`)) {
             userData.leaves = userData.leaves.filter(l => l.title !== t);
             delete userData.config[t];
             await setDoc(doc(db, "users", auth.currentUser.uid), userData);
@@ -204,21 +212,25 @@
 
     document.getElementById('add-leave-btn').onclick = async () => {
         const start = document.getElementById('start-date').value, end = document.getElementById('end-date').value, type = document.getElementById('leave-type-select').value;
-        if(!start || !type) return;
+        if(!start || !type) return alert("Veuillez remplir les dates et le type.");
+        
         let cur = new Date(start), last = new Date(end || start);
         while(cur <= last) {
-            if(cur.getDay() !== 0 && cur.getDay() !== 6) {
+            if(cur.getDay() !== 0 && cur.getDay() !== 6) { // Hors week-end
                 const isC = (type === 'AUTRE');
                 userData.leaves.push({
                     title: isC ? document.getElementById('custom-info-text').value : type,
                     start: cur.toISOString().split('T')[0],
                     backgroundColor: isC ? '#bdc3c7' : userData.config[type].color,
+                    borderColor: '#ddd',
                     isCustom: isC
                 });
             }
             cur.setDate(cur.getDate()+1);
         }
         await setDoc(doc(db, "users", auth.currentUser.uid), userData);
+        document.getElementById('start-date').value = '';
+        document.getElementById('end-date').value = '';
     };
 </script>
 </body>
