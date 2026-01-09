@@ -76,29 +76,48 @@
         };
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-            initialView: 'dayGridMonth', locale: 'fr', firstDay: 1,
-            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,dayGridYear' },
-            events: leaves,
-            datesSet: function(info) {
-                const year = info.view.currentStart.getFullYear();
-                const h = getHolidays(year);
-                const source = calendar.getEventSourceById('feries');
-                if(source) source.remove();
-                calendar.addEventSource({ id: 'feries', events: Object.keys(h).map(d => ({ title: h[d], start: d, display: 'background', backgroundColor: '#e0e0e0' })) });
-            },
-            eventClick: function(info) {
-                if(info.event.display === 'background') return;
-                if(confirm("Supprimer ce jour ?")) {
-                    leaves = leaves.filter(l => !(l.start === info.event.startStr && l.title === info.event.title));
-                    save();
-                }
+document.addEventListener('DOMContentLoaded', function() {
+    calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+        initialView: 'dayGridMonth', 
+        locale: 'fr', 
+        firstDay: 1,
+        headerToolbar: { 
+            left: 'prev,next today', 
+            center: 'title', 
+            right: 'dayGridMonth,dayGridYear' 
+        },
+        events: leaves,
+        // Cette fonction s'exécute à chaque changement de mois/année
+        datesSet: function(info) {
+            const year = info.view.currentStart.getFullYear();
+            const h = getHolidays(year);
+            
+            // On supprime l'ancienne source des fériés si elle existe
+            const oldSource = calendar.getEventSourceById('feries');
+            if(oldSource) oldSource.remove();
+            
+            // On ajoute la nouvelle source
+            calendar.addEventSource({ 
+                id: 'feries', 
+                events: Object.keys(h).map(d => ({ 
+                    title: h[d], 
+                    start: d, 
+                    display: 'background', 
+                    backgroundColor: '#e0e0e0' // Gris clair pour les fériés
+                })) 
+            });
+        },
+        eventClick: function(info) {
+            if(info.event.display === 'background') return; // Ne pas supprimer les fériés
+            if(confirm("Supprimer ce jour ?")) {
+                leaves = leaves.filter(l => !(l.start === info.event.startStr && l.title === info.event.title));
+                save();
             }
-        });
-        calendar.render();
-        updateUI();
+        }
     });
+    calendar.render();
+    updateUI();
+});
 
     function toggleSettings() {
         const c = document.getElementById('settings-content');
