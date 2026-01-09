@@ -13,6 +13,7 @@
             --primary: #2c3e50;
             --secondary: #95a5a6;
             --danger: #e74c3c;
+            --info: #34495e;
             --bg: #f4f7f6;
             --sidebar-width: 350px;
         }
@@ -67,7 +68,6 @@
         .btn-toggle { background: var(--secondary); font-size: 0.7em; padding: 4px 8px; float: right; }
         .btn-delete-all { background: var(--danger); margin-top: 20px; width: 100%; }
 
-        /* Liste des types dans les paramètres */
         .type-item {
             display: flex;
             justify-content: space-between;
@@ -77,15 +77,8 @@
             margin-bottom: 5px;
             border-radius: 4px;
             border: 1px solid #eee;
-            font-size: 0.9em;
         }
-        .btn-remove-type {
-            background: none;
-            color: var(--danger);
-            padding: 0;
-            font-size: 1.2em;
-        }
-        .btn-remove-type:hover { background: none; transform: scale(1.2); }
+        .btn-remove-type { background: none; color: var(--danger); padding: 0; font-size: 1.2em; }
 
         #calendar-container { flex-grow: 1; padding: 25px; background: white; overflow-y: auto; }
         #calendar { height: 100%; }
@@ -95,6 +88,9 @@
             font-weight: bold !important;
             padding-left: 4px !important;
         }
+
+        /* Masquer par défaut le champ de texte libre */
+        #custom-info-group { display: none; margin-top: 5px; }
 
         @media (max-width: 800px) {
             body { flex-direction: column; }
@@ -114,15 +110,22 @@
         <input type="date" id="start-date">
         <label>Date de fin :</label>
         <input type="date" id="end-date">
+        
         <label>Type :</label>
-        <select id="leave-type-select"></select>
-        <button onclick="addLeaveRange()">Enregistrer le congé</button>
+        <select id="leave-type-select" onchange="checkType()">
+            </select>
+
+        <div id="custom-info-group">
+            <label>Description de l'information :</label>
+            <input type="text" id="custom-info-text" placeholder="Ex: Déplacement, RDV...">
+        </div>
+        
+        <button onclick="addLeaveRange()" style="margin-top:10px;">Enregistrer</button>
     </div>
 
     <h3>⚙️ Paramétrage <button class="btn-toggle" onclick="toggleSettings()" id="toggle-btn">Afficher</button></h3>
     <div id="settings-content" style="display: none;">
-        <div id="types-list-admin" style="margin-bottom: 15px;">
-            </div>
+        <div id="types-list-admin" style="margin-bottom: 15px;"></div>
         <div class="form-group" style="border-top: 1px solid #ddd; pt-10">
             <label>Nouveau type :</label>
             <input type="text" id="new-type-name" placeholder="Ex: Congés Payés">
@@ -130,7 +133,7 @@
             <input type="number" id="new-type-quota" placeholder="25">
             <label>Couleur :</label>
             <input type="color" id="new-type-color" value="#e1ff00">
-            <button onclick="saveNewType()" style="background: #27ae60;">Ajouter ce type</button>
+            <button onclick="saveNewType()" style="background: #27ae60;">Ajouter</button>
         </div>
         <button class="btn-delete-all" onclick="resetAll()">Vider toutes les données</button>
     </div>
@@ -147,7 +150,6 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         const calendarEl = document.getElementById('calendar');
-        
         calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             locale: 'fr',
@@ -157,19 +159,24 @@
                 center: 'title',
                 right: 'dayGridMonth,dayGridYear'
             },
-            buttonText: { today: 'Aujourd\'hui', month: 'Mois', year: 'Année' },
             events: leaves,
             eventClick: function(info) {
-                if(confirm(`Supprimer ce jour de congé ?`)) {
+                if(confirm(`Supprimer cet événement ?`)) {
                     leaves = leaves.filter(l => !(l.start === info.event.startStr && l.title === info.event.title));
                     saveAndRefresh();
                 }
             }
         });
-        
         calendar.render();
         updateUI();
     });
+
+    // Affiche le champ texte si "Autre" est sélectionné
+    function checkType() {
+        const select = document.getElementById('leave-type-select');
+        const customGroup = document.getElementById('custom-info-group');
+        customGroup.style.display = (select.value === "AUTRE_INFO") ? "block" : "none";
+    }
 
     function toggleSettings() {
         const content = document.getElementById('settings-content');
@@ -183,22 +190,17 @@
         const quota = document.getElementById('new-type-quota').value;
         const color = document.getElementById('new-type-color').value;
         if(!name || !quota) return;
-        
         config[name] = { quota: parseInt(quota), color: color };
         localStorage.setItem('leaveConfig', JSON.stringify(config));
         document.getElementById('new-type-name').value = '';
         updateUI();
     }
 
-    // NOUVELLE FONCTION : Supprimer un type spécifique
     function removeType(typeName) {
-        if(confirm(`Voulez-vous supprimer le type "${typeName}" ?`)) {
-            const deleteEvents = confirm(`Voulez-vous aussi supprimer TOUS les jours de "${typeName}" déjà posés dans le calendrier ?`);
-            
-            if(deleteEvents) {
+        if(confirm(`Supprimer le type "${typeName}" ?`)) {
+            if(confirm(`Supprimer aussi les jours posés de ce type ?`)) {
                 leaves = leaves.filter(l => l.title !== typeName);
             }
-            
             delete config[typeName];
             localStorage.setItem('leaveConfig', JSON.stringify(config));
             saveAndRefresh();
@@ -208,25 +210,35 @@
     function addLeaveRange() {
         const start = document.getElementById('start-date').value;
         const end = document.getElementById('end-date').value;
-        const type = document.getElementById('leave-type-select').value;
+        const selectValue = document.getElementById('leave-type-select').value;
         
-        if(!type || !start || !end || start > end) {
-            alert("Sélectionnez des dates valides.");
-            return;
+        let finalTitle = selectValue;
+        let finalColor = "#bdc3c7"; // Gris par défaut pour les infos libres
+
+        if(selectValue === "AUTRE_INFO") {
+            finalTitle = document.getElementById('custom-info-text').value.trim() || "Info";
+            finalColor = "#ecf0f1"; // Couleur neutre pour les infos
+        } else if(config[selectValue]) {
+            finalColor = config[selectValue].color;
+        } else {
+            alert("Sélectionnez un type."); return;
         }
+
+        if(!start || !end || start > end) { alert("Dates invalides."); return; }
 
         let current = new Date(start);
         let last = new Date(end);
-        
         while(current <= last) {
+            // Pour les types "Quotas", on exclut les week-ends. 
+            // Pour les "Infos libres", on peut tout inclure (au choix). Ici, j'exclus les WE par défaut.
             if(current.getDay() !== 0 && current.getDay() !== 6) {
-                let dateStr = current.toISOString().split('T')[0];
                 leaves.push({
-                    title: type,
-                    start: dateStr,
-                    backgroundColor: config[type].color,
-                    borderColor: config[type].color,
-                    allDay: true
+                    title: finalTitle,
+                    start: current.toISOString().split('T')[0],
+                    backgroundColor: finalColor,
+                    borderColor: "#bdc3c7",
+                    allDay: true,
+                    isCustom: (selectValue === "AUTRE_INFO") // Marqueur pour ne pas compter dans les quotas
                 });
             }
             current.setDate(current.getDate() + 1);
@@ -240,37 +252,29 @@
         const adminList = document.getElementById('types-list-admin');
         
         display.innerHTML = '';
-        select.innerHTML = '';
+        select.innerHTML = '<option value="">-- Choisir --</option>';
+        // AJOUT DE L'OPTION LIBRE
+        select.innerHTML += '<option value="AUTRE_INFO">💡 Événement libre / Information</option>';
         adminList.innerHTML = '<strong>Types enregistrés :</strong>';
 
         const types = Object.keys(config);
-        if(types.length === 0) {
-            display.innerHTML = '<p style="color:gray; font-style:italic;">Aucun type configuré.</p>';
-            adminList.innerHTML += '<p style="font-size:0.8em; color:gray">Liste vide</p>';
-        } else {
-            types.forEach(type => {
-                const used = leaves.filter(l => l.title === type).length;
-                
-                // Sidebar Quotas
-                display.innerHTML += `
-                    <div class="quota-card" style="border-left-color: ${config[type].color}">
-                        <strong>${type}</strong><br>
-                        <span class="quota-val">${config[type].quota - used}</span> / ${config[type].quota} j restants
-                    </div>`;
-                
-                // Select Formulaire
-                const opt = document.createElement('option');
-                opt.value = type; opt.innerText = type;
-                select.appendChild(opt);
-
-                // Admin List (Suppression)
-                adminList.innerHTML += `
-                    <div class="type-item">
-                        <span><span style="color:${config[type].color}">●</span> ${type} (${config[type].quota}j)</span>
-                        <button class="btn-remove-type" onclick="removeType('${type}')" title="Supprimer ce type">🗑️</button>
-                    </div>`;
-            });
-        }
+        types.forEach(type => {
+            // On ne compte que les congés qui ne sont PAS "custom"
+            const used = leaves.filter(l => l.title === type && !l.isCustom).length;
+            
+            display.innerHTML += `
+                <div class="quota-card" style="border-left-color: ${config[type].color}">
+                    <strong>${type}</strong><br>
+                    <span class="quota-val">${config[type].quota - used}</span> / ${config[type].quota} j
+                </div>`;
+            
+            select.innerHTML += `<option value="${type}">${type}</option>`;
+            adminList.innerHTML += `
+                <div class="type-item">
+                    <span>${type}</span>
+                    <button class="btn-remove-type" onclick="removeType('${type}')">🗑️</button>
+                </div>`;
+        });
     }
 
     function saveAndRefresh() {
@@ -279,12 +283,8 @@
     }
 
     function resetAll() {
-        if(confirm("Attention : cela supprimera TOUT (types et calendrier).")) {
-            localStorage.clear();
-            location.reload();
-        }
+        if(confirm("Tout effacer ?")) { localStorage.clear(); location.reload(); }
     }
 </script>
-
 </body>
 </html>
