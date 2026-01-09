@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Planning Annuel Matrix</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; margin: 0; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-back { background: #2c3e50; color: white; text-decoration: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; }
+        .matrix-table { border-collapse: collapse; width: 100%; background: white; table-layout: fixed; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .matrix-table th, .matrix-table td { border: 1px solid #ddd; text-align: center; height: 22px; font-size: 11px; }
+        .matrix-table th { background: #2c3e50; color: white; padding: 8px 0; }
+        .day-label { background: #f8f9fa; font-weight: bold; width: 40px; }
+        .is-weekend { background-color: #f1f4f6; }
+        .day-filled { font-weight: 900; color: black; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📅 Planning Annuel 2026</h1>
+        <a href="index.html" class="btn-back">⬅ Revenir à la Saisie</a>
+    </div>
+
+    <div id="matrix-wrapper"></div>
+
+    <script>
+        const leaves = JSON.parse(localStorage.getItem('leavesData')) || [];
+        const year = 2026;
+        const months = ["Janv", "Févr", "Mars", "Avril", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+
+        let html = `<table class="matrix-table"><thead><tr><th class="day-label">Jour</th>`;
+        months.forEach(m => html += `<th>${m}</th>`);
+        html += `</tr></thead><tbody>`;
+
+        for(let d = 1; d <= 31; d++) {
+            html += `<tr><td class="day-label">${d}</td>`;
+            for(let mIdx = 0; mIdx < 12; mIdx++) {
+                let lastDay = new Date(year, mIdx + 1, 0).getDate();
+                if(d > lastDay) {
+                    html += `<td style="background:#eee"></td>`;
+                } else {
+                    let dateStr = `${year}-${String(mIdx+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                    let isWE = ([0, 6].includes(new Date(year, mIdx, d).getDay()));
+                    let event = leaves.find(l => l.start === dateStr);
+                    let style = event ? `background-color:${event.backgroundColor};` : "";
+                    html += `<td class="${isWE ? 'is-weekend' : ''} ${event ? 'day-filled' : ''}" style="${style}">
+                                ${event ? event.title.charAt(0).toUpperCase() : ''}
+                             </td>`;
+                }
+            }
+            html += `</tr>`;
+        }
+        document.getElementById('matrix-wrapper').innerHTML = html + `</tbody></table>`;
+    </script>
+</body>
+</html>
