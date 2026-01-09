@@ -2,33 +2,38 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Gestion des Congés - Expert</title>
+    <title>Mon Planning Congés - Complet</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
-        :root { --primary: #2c3e50; --bg: #f4f7f6; --danger: #e74c3c; }
+        :root { --primary: #2c3e50; --bg: #f4f7f6; --danger: #e74c3c; --success: #27ae60; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: #333; }
         
         /* AUTH */
         #auth-container { display: flex; justify-content: center; align-items: center; height: 100vh; background: var(--primary); position: fixed; width: 100%; top: 0; z-index: 9999; }
         .auth-box { background: white; padding: 30px; border-radius: 12px; width: 320px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
         .auth-box input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        .auth-box button { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .toggle-link { font-size: 0.8em; color: #3498db; cursor: pointer; margin-top: 15px; display: block; text-decoration: underline; }
-
+        
         /* APP LAYOUT */
         #main-app { display: none; }
+        .header { background: white; padding: 10px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; height: 60px; }
         .app-container { display: flex; height: calc(100vh - 60px); }
-        #sidebar { width: 350px; background: white; border-right: 1px solid #ddd; padding: 20px; overflow-y: auto; }
-        #calendar-container { flex-grow: 1; padding: 20px; background: white; overflow-y: auto; }
         
-        .header { background: white; padding: 10px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; height: 60px; box-sizing: border-box; }
-        .quota-card { background: #fff; border: 1px solid #eee; padding: 12px; margin-bottom: 10px; border-radius: 6px; border-left: 7px solid #ccc; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .btn-action { width: 100%; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        /* SIDEBAR */
+        #sidebar { width: 350px; background: white; border-right: 1px solid #ddd; padding: 20px; overflow-y: auto; box-sizing: border-box; }
+        .quota-card { background: #fff; border: 1px solid #eee; padding: 12px; margin-bottom: 10px; border-radius: 6px; border-left: 7px solid #ccc; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* FORMULAIRES */
+        input[type="date"], select, input[type="text"], input[type="number"] { width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .btn-action { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
+        
+        /* SETTINGS */
         #settings-content { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-top: 10px; }
-        .btn-toggle { font-size: 0.7em; background: #95a5a6; color: white; padding: 3px 8px; border-radius: 3px; cursor: pointer; float: right; }
+        .type-item-row { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px; margin-bottom: 5px; border-radius: 4px; border: 1px solid #eee; font-size: 0.9em; }
         
-        input[type="date"], select { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        #calendar-container { flex-grow: 1; padding: 20px; background: white; overflow-y: auto; }
+        .btn-toggle { font-size: 0.75em; background: #95a5a6; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; float: right; }
     </style>
 </head>
 <body>
@@ -38,16 +43,17 @@
         <h2 id="auth-title">Connexion</h2>
         <input type="email" id="email" placeholder="Email">
         <input type="password" id="password" placeholder="Mot de passe">
-        <button id="auth-btn">Se connecter</button>
-        <span class="toggle-link" id="toggle-auth">Pas de compte ? Créer un profil</span>
+        <button id="auth-btn" class="btn-action" style="background: var(--success);">Se connecter</button>
+        <span id="toggle-auth" style="color:#3498db; cursor:pointer; font-size:0.8em; text-decoration:underline;">Créer un compte</span>
     </div>
 </div>
 
 <div id="main-app">
     <div class="header">
         <span>👤 <strong id="user-display"></strong></span>
-        <button onclick="location.reload()" style="background:var(--danger); color:white; border:none; padding:5px 15px; border-radius:4px; cursor:pointer;">Déconnexion</button>
+        <button onclick="location.reload()" style="background:var(--danger); color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer;">Déconnexion</button>
     </div>
+
     <div class="app-container">
         <div id="sidebar">
             <h3>📊 Mes Quotas</h3>
@@ -58,22 +64,26 @@
             <label>Du :</label> <input type="date" id="start-date">
             <label>Au :</label> <input type="date" id="end-date">
             <label>Type :</label>
-            <select id="leave-type-select" onchange="window.checkType()"></select>
+            <select id="leave-type-select">
+                <option value="">-- Choisir --</option>
+                <option value="INFO_LIBRE">💡 Information libre</option>
+            </select>
             <div id="custom-info-group" style="display:none;">
                 <input type="text" id="custom-info-text" placeholder="Titre (ex: Formation)">
             </div>
-            <button class="btn-action" id="add-leave-btn">Enregistrer</button>
+            <button class="btn-action" id="add-leave-btn">Enregistrer les jours</button>
 
-            <h3 style="margin-top:30px;">⚙️ Paramètres <span class="btn-toggle" id="toggle-settings-btn">Afficher</span></h3>
+            <h3 style="margin-top:20px;">⚙️ Configuration <span class="btn-toggle" id="toggle-settings-btn">Afficher</span></h3>
             <div id="settings-content" style="display:none;">
                 <div id="types-list-admin"></div>
-                <h4 style="margin-bottom:5px; margin-top:15px;">Nouveau type :</h4>
+                <h4 style="margin: 15px 0 5px 0;">Ajouter un type :</h4>
                 <input type="text" id="new-type-name" placeholder="Nom (ex: RTT)">
-                <input type="number" id="new-type-quota" placeholder="Nb jours">
+                <input type="number" id="new-type-quota" placeholder="Nombre de jours">
                 <input type="color" id="new-type-color" value="#3498db" style="height:40px; cursor:pointer;">
-                <button class="btn-action" id="save-type-btn" style="background:#27ae60;">+ Créer</button>
+                <button class="btn-action" id="save-type-btn" style="background:var(--success);">+ Créer ce type</button>
             </div>
         </div>
+
         <div id="calendar-container">
             <div id="calendar"></div>
         </div>
@@ -100,7 +110,7 @@
     let calendar;
     let userData = { leaves: [], config: { "CP": {quota:25, color:"#3498db"}, "RTT": {quota:10, color:"#e1ff00"} } };
 
-    // --- JOURS FERIES ---
+    // --- FERIES ---
     function getHolidays(y) {
         const a=y%19, b=Math.floor(y/100), c=y%100, d=Math.floor(b/4), e=b%4, f=Math.floor((b+8)/25), g=Math.floor((b-f+1)/3), h=(19*a+b-d-g+15)%30, i=Math.floor(c/4), k=c%4, l=(32+2*e+2*i-h-k)%7, m=Math.floor((a+11*h+22*l)/451), n=Math.floor((h+l-7*m+114)/31), p=(h+l-7*m+114)%31;
         const paques = new Date(y, n-1, p+1);
@@ -112,7 +122,7 @@
     document.getElementById('toggle-auth').onclick = () => {
         const t = document.getElementById('auth-title'), b = document.getElementById('auth-btn'), l = document.getElementById('toggle-auth');
         if(b.innerText === "Se connecter") { t.innerText="Inscription"; b.innerText="Créer mon compte"; l.innerText="Déjà inscrit ? Connexion"; }
-        else { t.innerText="Connexion"; b.innerText="Se connecter"; l.innerText="Pas de compte ? Créer un profil"; }
+        else { t.innerText="Connexion"; b.innerText="Se connecter"; l.innerText="Créer un compte"; }
     };
 
     document.getElementById('auth-btn').onclick = async () => {
@@ -120,7 +130,7 @@
         try {
             if(document.getElementById('auth-btn').innerText === "Se connecter") await signInWithEmailAndPassword(auth, e, p);
             else await createUserWithEmailAndPassword(auth, e, p);
-        } catch(err) { alert("Erreur : " + err.message); }
+        } catch(err) { alert("Erreur Firebase : " + err.message); }
     };
 
     onAuthStateChanged(auth, (user) => {
@@ -128,12 +138,12 @@
             document.getElementById('auth-container').style.display='none';
             document.getElementById('main-app').style.display='block';
             document.getElementById('user-display').innerText = user.email;
-            initApp(user.uid);
+            startApp(user.uid);
         }
     });
 
-    // --- CORE APP ---
-    function initApp(uid) {
+    // --- APP LOGIC ---
+    function startApp(uid) {
         if(!calendar) {
             calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
                 initialView:'dayGridMonth', locale:'fr', firstDay:1,
@@ -141,7 +151,7 @@
                 datesSet: (info) => {
                     const h = getHolidays(info.view.currentStart.getFullYear());
                     const src = calendar.getEventSourceById('feries'); if(src) src.remove();
-                    calendar.addEventSource({ id:'feries', events: Object.keys(h).map(d=>({title:h[d], start:d, display:'background', backgroundColor:'#eee'}))});
+                    calendar.addEventSource({ id:'feries', events: Object.keys(h).map(d=>({title:h[d], start:d, display:'background', backgroundColor:'#eeeeee'}))});
                 },
                 eventClick: async (info) => {
                     if(info.event.display === 'background') return;
@@ -157,39 +167,60 @@
         onSnapshot(doc(db, "users", uid), (snap) => {
             if(snap.exists()) {
                 userData = snap.data();
-                updateUI(uid);
+                refreshAll();
             } else {
                 setDoc(doc(db, "users", uid), userData);
             }
         });
     }
 
-    function updateUI(uid) {
+    function refreshAll() {
+        // MAJ Quotas & Selecteur
         const d = document.getElementById('quotas-display'), s = document.getElementById('leave-type-select'), a = document.getElementById('types-list-admin');
-        d.innerHTML = ''; s.innerHTML = '<option value="">-- Type --</option><option value="AUTRE">💡 Info libre</option>'; a.innerHTML = '';
+        d.innerHTML = ''; 
+        s.innerHTML = '<option value="">-- Choisir --</option><option value="INFO_LIBRE">💡 Information libre</option>'; 
+        a.innerHTML = '';
         
         Object.keys(userData.config).forEach(t => {
             const used = userData.leaves.filter(l => l.title === t && !l.isCustom).length;
             const rem = userData.config[t].quota - used;
-            d.innerHTML += `<div class="quota-card" style="border-left-color:${userData.config[t].color}"><strong>${t}</strong> <span style="font-weight:bold;">${rem}/${userData.config[t].quota}j</span></div>`;
+            // Sidebar display
+            d.innerHTML += `<div class="quota-card" style="border-left-color:${userData.config[t].color}"><strong>${t}</strong> <b>${rem}/${userData.config[t].quota}j</b></div>`;
+            // Select dropdown
             s.innerHTML += `<option value="${t}">${t}</option>`;
-            a.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; background:white; padding:5px; border-radius:4px; border:1px solid #eee;"><span>${t}</span> <button onclick="window.delType('${t}')" style="color:red; background:none; border:none; cursor:pointer;">🗑️</button></div>`;
+            // Admin list
+            const row = document.createElement('div');
+            row.className = 'type-item-row';
+            row.innerHTML = `<span>${t} (${userData.config[t].quota}j)</span>`;
+            const delBtn = document.createElement('button');
+            delBtn.innerText = '🗑️';
+            delBtn.style = 'background:none; border:none; cursor:pointer; color:red;';
+            delBtn.onclick = async () => {
+                if(confirm(`Supprimer le type "${t}" et ses jours associés ?`)) {
+                    userData.leaves = userData.leaves.filter(l => l.title !== t);
+                    delete userData.config[t];
+                    await setDoc(doc(db, "users", auth.currentUser.uid), userData);
+                }
+            };
+            row.appendChild(delBtn);
+            a.appendChild(row);
         });
+
+        // MAJ Calendrier
         calendar.removeAllEvents();
         calendar.addEventSource(userData.leaves);
     }
 
-    // --- ACTIONS GLOBALES ---
-    window.checkType = () => {
-        const type = document.getElementById('leave-type-select').value;
-        document.getElementById('custom-info-group').style.display = (type === 'AUTRE') ? 'block' : 'none';
+    // --- INTERACTION UI ---
+    document.getElementById('leave-type-select').onchange = (e) => {
+        document.getElementById('custom-info-group').style.display = (e.target.value === 'INFO_LIBRE') ? 'block' : 'none';
     };
 
     document.getElementById('toggle-settings-btn').onclick = () => {
-        const s = document.getElementById('settings-content');
-        const isHidden = s.style.display === 'none';
-        s.style.display = isHidden ? 'block' : 'none';
-        document.getElementById('toggle-settings-btn').innerText = isHidden ? 'Masquer' : 'Afficher';
+        const s = document.getElementById('settings-content'), b = document.getElementById('toggle-settings-btn');
+        const hide = s.style.display === 'block';
+        s.style.display = hide ? 'none' : 'block';
+        b.innerText = hide ? 'Afficher' : 'Masquer';
     };
 
     document.getElementById('save-type-btn').onclick = async () => {
@@ -202,22 +233,14 @@
         }
     };
 
-    window.delType = async (t) => {
-        if(confirm(`Supprimer le type "${t}" et tous les congés associés ?`)) {
-            userData.leaves = userData.leaves.filter(l => l.title !== t);
-            delete userData.config[t];
-            await setDoc(doc(db, "users", auth.currentUser.uid), userData);
-        }
-    };
-
     document.getElementById('add-leave-btn').onclick = async () => {
         const start = document.getElementById('start-date').value, end = document.getElementById('end-date').value, type = document.getElementById('leave-type-select').value;
         if(!start || !type) return alert("Veuillez remplir les dates et le type.");
         
         let cur = new Date(start), last = new Date(end || start);
         while(cur <= last) {
-            if(cur.getDay() !== 0 && cur.getDay() !== 6) { // Hors week-end
-                const isC = (type === 'AUTRE');
+            if(cur.getDay() !== 0 && cur.getDay() !== 6) { 
+                const isC = (type === 'INFO_LIBRE');
                 userData.leaves.push({
                     title: isC ? document.getElementById('custom-info-text').value : type,
                     start: cur.toISOString().split('T')[0],
