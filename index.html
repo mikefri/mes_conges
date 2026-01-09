@@ -58,7 +58,7 @@
             <span>👤 <strong id="user-display"></strong></span>
             <a href="planning.html" class="btn-nav">📅 Planning Global</a>
         </div>
-        <button onclick="location.reload()" style="background:var(--danger); color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer;">Déconnexion</button>
+        <button id="logout-btn" style="background:var(--danger); color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer;">Déconnexion</button>
     </div>
 
     <div class="app-container">
@@ -101,7 +101,8 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    
     const firebaseConfig = {
         apiKey: "AIzaSyB0uDfGAHq99p1VqRNj9pap-E7J52JlQ3w",
         authDomain: "monplanningconges.firebaseapp.com",
@@ -258,6 +259,14 @@
         document.getElementById('start-date').value = '';
         document.getElementById('end-date').value = '';
         document.getElementById('custom-info-text').value = '';
+        document.getElementById('logout-btn').onclick = async () => {
+    try {
+        await signOut(auth);
+        // Une fois déconnecté, on force le rechargement pour afficher l'écran de login
+        window.location.reload();
+    } catch (err) {
+        alert("Erreur lors de la déconnexion : " + err.message);
+    }
     };
 </script>
 </body>
