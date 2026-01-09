@@ -2,26 +2,56 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Mon Gestionnaire de Congés</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Calendrier de Congés</title>
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
     <style>
-        body { font-family: Arial, sans-serif; display: flex; gap: 20px; padding: 20px; }
-        #sidebar { width: 300px; background: #f4f4f4; padding: 15px; border-radius: 8px; }
-        #calendar-container { flex-grow: 1; }
-        .stat-card { background: white; padding: 10px; margin-bottom: 10px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        :root { --primary: #2c3e50; --bg: #f8f9fa; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); }
+        
+        /* Sidebar */
+        #sidebar { width: 350px; background: white; border-right: 1px solid #ddd; padding: 20px; overflow-y: auto; }
+        h2, h3 { color: var(--primary); border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        
+        /* Formulaires */
+        .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
+        input, select, button { padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        button { cursor: pointer; background: var(--primary); color: white; border: none; transition: 0.3s; }
+        button:hover { opacity: 0.8; }
+        .btn-delete { background: #e74c3c; margin-top: 10px; }
+
+        /* Dashboard */
+        .quota-card { background: #fff; border: 1px solid #eee; padding: 10px; border-left: 5px solid; margin-bottom: 10px; border-radius: 4px; }
+        .quota-val { font-size: 1.2em; font-weight: bold; }
+
+        /* Calendrier */
+        #calendar-container { flex-grow: 1; padding: 20px; background: white; }
+        #calendar { height: 100%; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h2>Mes Quotas</h2>
-    <div id="quotas-list"></div>
-    <hr>
-    <h3>Poser un congé</h3>
-    <input type="date" id="leave-date">
-    <select id="leave-type"></select>
-    <button onclick="addLeave()">Ajouter</button>
+    <h2>📊 Mon Tableau de Bord</h2>
+    <div id="quotas-display"></div>
+
+    <h3>📅 Poser un congé</h3>
+    <div class="form-group">
+        <label>Du :</label> <input type="date" id="start-date">
+        <label>Au (inclus) :</label> <input type="date" id="end-date">
+        <label>Type :</label> <select id="leave-type-select"></select>
+        <button onclick="addLeaveRange()">Enregistrer le congé</button>
+    </div>
+
+    <h3>⚙️ Paramétrage</h3>
+    <div class="form-group" style="background: #fdfdfd; padding: 10px; border: 1px dashed #ccc;">
+        <label>Nom du type (ex: RTT) :</label> <input type="text" id="new-type-name" placeholder="CP">
+        <label>Quota annuel :</label> <input type="number" id="new-type-quota" value="25">
+        <label>Couleur :</label> <input type="color" id="new-type-color" value="#3498db">
+        <button onclick="saveNewType()">Ajouter ce type</button>
+    </div>
+    <button class="btn-delete" onclick="resetAll()">⚠️ Tout réinitialiser</button>
 </div>
 
 <div id="calendar-container">
@@ -29,55 +59,91 @@
 </div>
 
 <script>
-    // Configuration par défaut (Paramétrable via interface plus tard)
-    let config = {
-        'CP': { quota: 25, color: '#3788d8' },
+    let config = JSON.parse(localStorage.getItem('leaveConfig')) || {
+        'CP': { quota: 25, color: '#3498db' },
         'RTT': { quota: 10, color: '#2ecc71' }
     };
-
-    let leaves = JSON.parse(localStorage.getItem('myLeaves')) || [];
+    let leaves = JSON.parse(localStorage.getItem('leavesData')) || [];
+    let calendar;
 
     document.addEventListener('DOMContentLoaded', function() {
         const calendarEl = document.getElementById('calendar');
-        const calendar = new FullCalendar.Calendar(calendarEl, {
+        calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
+            locale: 'fr',
+            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,dayGridYear' },
             events: leaves,
-            locale: 'fr'
+            eventClick: function(info) {
+                if(confirm("Supprimer ce congé ?")) {
+                    leaves = leaves.filter(l => !(l.start === info.event.startStr && l.title === info.event.title));
+                    saveAndRefresh();
+                }
+            }
         });
         calendar.render();
-        updateDashboard();
-        populateTypes();
+        updateUI();
     });
 
-    function populateTypes() {
-        const select = document.getElementById('leave-type');
+    function saveNewType() {
+        const name = document.getElementById('new-type-name').value.toUpperCase();
+        const quota = document.getElementById('new-type-quota').value;
+        const color = document.getElementById('new-type-color').value;
+        if(!name) return;
+        config[name] = { quota: parseInt(quota), color: color };
+        localStorage.setItem('leaveConfig', JSON.stringify(config));
+        updateUI();
+    }
+
+    function addLeaveRange() {
+        const start = document.getElementById('start-date').value;
+        const end = document.getElementById('end-date').value;
+        const type = document.getElementById('leave-type-select').value;
+        
+        if(!start || !end || start > end) { alert("Dates invalides"); return; }
+
+        let current = new Date(start);
+        let last = new Date(end);
+        
+        while(current <= last) {
+            let dateStr = current.toISOString().split('T')[0];
+            // On ne compte pas les week-ends (optionnel)
+            if(current.getDay() !== 0 && current.getDay() !== 6) {
+                leaves.push({ title: type, start: dateStr, backgroundColor: config[type].color, allDay: true });
+            }
+            current.setDate(current.getDate() + 1);
+        }
+        saveAndRefresh();
+    }
+
+    function updateUI() {
+        const display = document.getElementById('quotas-display');
+        const select = document.getElementById('leave-type-select');
+        display.innerHTML = '';
+        select.innerHTML = '';
+
         for (let type in config) {
-            let opt = document.createElement('option');
-            opt.value = type;
-            opt.innerHTML = type;
-            select.appendChild(opt);
+            const used = leaves.filter(l => l.title === type).length;
+            const remaining = config[type].quota - used;
+            
+            display.innerHTML += `
+                <div class="quota-card" style="border-left-color: ${config[type].color}">
+                    <strong>${type}</strong><br>
+                    <span class="quota-val">${remaining}</span> restants sur ${config[type].quota}
+                </div>`;
+            
+            select.innerHTML += `<option value="${type}">${type}</option>`;
         }
     }
 
-    function addLeave() {
-        const date = document.getElementById('leave-date').value;
-        const type = document.getElementById('leave-type').value;
-        if(!date) return;
-
-        const newLeave = { title: type, start: date, backgroundColor: config[type].color };
-        leaves.push(newLeave);
-        localStorage.setItem('myLeaves', JSON.stringify(leaves));
-        location.reload(); // Rafraîchissement simple
+    function saveAndRefresh() {
+        localStorage.setItem('leavesData', JSON.stringify(leaves));
+        location.reload();
     }
 
-    function updateDashboard() {
-        const list = document.getElementById('quotas-list');
-        for (let type in config) {
-            const used = leaves.filter(l => l.title === type).length;
-            list.innerHTML += `
-                <div class="stat-card">
-                    <strong>${type}</strong>: ${config[type].quota - used} restants / ${config[type].quota}
-                </div>`;
+    function resetAll() {
+        if(confirm("Voulez-vous vraiment tout effacer ?")) {
+            localStorage.clear();
+            location.reload();
         }
     }
 </script>
