@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Gestion Congés Intégrale</title>
+    <title>Mon Planning Congés - Version Intégrale</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -10,27 +10,33 @@
         :root { --primary: #2c3e50; --bg: #f4f7f6; --danger: #e74c3c; --success: #27ae60; --info: #3498db; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: #333; }
         
+        /* ZONE AUTHENTIFICATION */
         #auth-container { display: flex; justify-content: center; align-items: center; height: 100vh; background: var(--primary); position: fixed; width: 100%; top: 0; z-index: 9999; }
         .auth-box { background: white; padding: 30px; border-radius: 12px; width: 320px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
         .auth-box input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
         
+        /* LAYOUT PRINCIPAL */
         #main-app { display: none; }
         .header { background: white; padding: 10px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; height: 60px; }
         .header-left { display: flex; align-items: center; gap: 15px; }
         .app-container { display: flex; height: calc(100vh - 60px); }
         
+        /* SIDEBAR */
         #sidebar { width: 350px; background: white; border-right: 1px solid #ddd; padding: 20px; overflow-y: auto; box-sizing: border-box; }
         .quota-card { background: #fff; border: 1px solid #eee; padding: 12px; margin-bottom: 10px; border-radius: 6px; border-left: 7px solid #ccc; display: flex; justify-content: space-between; align-items: center; }
         
-        input, select { width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        .btn-action { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        /* FORMULAIRES */
+        input[type="date"], select, input[type="text"], input[type="number"] { width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .btn-action { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
         
-        .btn-nav { background: var(--info); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; text-decoration: none; font-size: 0.85em; }
+        .btn-nav { background: var(--info); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; text-decoration: none; font-size: 0.85em; display: inline-flex; align-items: center; gap: 5px; }
+        .btn-nav:hover { background: #2980b9; }
 
+        /* CONFIGURATION / SETTINGS */
         #settings-content { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-top: 10px; }
-        .type-item-row { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px; margin-bottom: 5px; border-radius: 4px; border: 1px solid #eee; }
+        .type-item-row { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px; margin-bottom: 5px; border-radius: 4px; border: 1px solid #eee; font-size: 0.9em; }
         
-        #calendar-container { flex-grow: 1; padding: 20px; background: white; }
+        #calendar-container { flex-grow: 1; padding: 20px; background: white; overflow-y: auto; }
         .btn-toggle { font-size: 0.75em; background: #95a5a6; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; float: right; }
     </style>
 </head>
@@ -42,7 +48,7 @@
         <input type="email" id="email" placeholder="Email">
         <input type="password" id="password" placeholder="Mot de passe">
         <button id="auth-btn" class="btn-action" style="background: var(--success);">Se connecter</button>
-        <p id="toggle-auth" style="color:#3498db; cursor:pointer; font-size:0.8em;">Créer un compte</p>
+        <span id="toggle-auth" style="color:#3498db; cursor:pointer; font-size:0.8em; text-decoration:underline;">Créer un compte</span>
     </div>
 </div>
 
@@ -72,16 +78,16 @@
             <div id="custom-info-group" style="display:none;">
                 <input type="text" id="custom-info-text" placeholder="Titre (ex: Formation)">
             </div>
-            <button class="btn-action" id="add-leave-btn">Enregistrer</button>
+            <button class="btn-action" id="add-leave-btn">Enregistrer les jours</button>
 
-            <h3 style="margin-top:20px;">⚙️ Paramètres <span class="btn-toggle" id="toggle-settings-btn">Afficher</span></h3>
+            <h3 style="margin-top:20px;">⚙️ Configuration <span class="btn-toggle" id="toggle-settings-btn">Afficher</span></h3>
             <div id="settings-content" style="display:none;">
                 <div id="types-list-admin"></div>
-                <h4 style="margin: 15px 0 5px 0;">+ Nouveau type :</h4>
+                <h4 style="margin: 15px 0 5px 0;">Ajouter un type :</h4>
                 <input type="text" id="new-type-name" placeholder="Nom (ex: RTT)">
-                <input type="number" id="new-type-quota" placeholder="Jours">
-                <input type="color" id="new-type-color" value="#3498db" style="height:40px;">
-                <button class="btn-action" id="save-type-btn" style="background:var(--success);">Ajouter</button>
+                <input type="number" id="new-type-quota" placeholder="Nombre de jours">
+                <input type="color" id="new-type-color" value="#3498db" style="height:40px; cursor:pointer;">
+                <button class="btn-action" id="save-type-btn" style="background:var(--success);">+ Créer ce type</button>
             </div>
         </div>
 
@@ -97,7 +103,7 @@
     import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
-        apiKey: "AIzaSyB0uDfGAHq99p1vQRnj9pap-E7J52JlQ3w",
+        apiKey: "AIzaSyB0uDfGAHq99p1VqRNj9pap-E7J52JlQ3w",
         authDomain: "monplanningconges.firebaseapp.com",
         projectId: "monplanningconges",
         storageBucket: "monplanningconges.firebasestorage.app",
@@ -111,10 +117,19 @@
     let calendar;
     let userData = { leaves: [], config: { "CP": {quota:25, color:"#3498db"}, "RTT": {quota:10, color:"#e1ff00"} } };
 
-    // --- AUTH ---
+    // --- FONCTION JOURS FERIES (Calcul complet) ---
+    function getHolidays(y) {
+        const a=y%19, b=Math.floor(y/100), c=y%100, d=Math.floor(b/4), e=b%4, f=Math.floor((b+8)/25), g=Math.floor((b-f+1)/3), h=(19*a+b-d-g+15)%30, i=Math.floor(c/4), k=c%4, l=(32+2*e+2*i-h-k)%7, m=Math.floor((a+11*h+22*l)/451), n=Math.floor((h+l-7*m+114)/31), p=(h+l-7*m+114)%31;
+        const paques = new Date(y, n-1, p+1);
+        const add = (d, n) => { let r=new Date(d); r.setDate(r.getDate()+n); return r.toISOString().split('T')[0]; };
+        return { [`${y}-01-01`]:"An", [add(paques,0)]:"Pâques", [add(paques,1)]:"L.Pâques", [`${y}-05-01`]:"Travail", [`${y}-05-08`]:"Victoire", [add(paques,39)]:"Ascension", [add(paques,50)]:"L.Pentec.", [`${y}-07-14`]:"Nat.", [`${y}-08-15`]:"Assompt.", [`${y}-11-01`]:"Toussaint", [`${y}-11-11`]:"Armistice", [`${y}-12-25`]:"Noël" };
+    }
+
+    // --- GESTION AUTHENTIFICATION ---
     document.getElementById('toggle-auth').onclick = () => {
-        const btn = document.getElementById('auth-btn');
-        btn.innerText = btn.innerText === "Se connecter" ? "Créer mon compte" : "Se connecter";
+        const t = document.getElementById('auth-title'), b = document.getElementById('auth-btn'), l = document.getElementById('toggle-auth');
+        if(b.innerText === "Se connecter") { t.innerText="Inscription"; b.innerText="Créer mon compte"; l.innerText="Connexion"; }
+        else { t.innerText="Connexion"; b.innerText="Se connecter"; l.innerText="Créer un compte"; }
     };
 
     document.getElementById('auth-btn').onclick = async () => {
@@ -122,7 +137,7 @@
         try {
             if(document.getElementById('auth-btn').innerText === "Se connecter") await signInWithEmailAndPassword(auth, e, p);
             else await createUserWithEmailAndPassword(auth, e, p);
-        } catch(err) { alert(err.message); }
+        } catch(err) { alert("Erreur : " + err.message); }
     };
 
     onAuthStateChanged(auth, (user) => {
@@ -130,97 +145,119 @@
             document.getElementById('auth-container').style.display='none';
             document.getElementById('main-app').style.display='block';
             document.getElementById('user-display').innerText = user.email;
-            
-            // Lancement de la synchro
-            onSnapshot(doc(db, "users", user.uid), (snap) => {
-                if(snap.exists()) {
-                    userData = snap.data();
-                    if(!calendar) initCalendar(user.uid);
-                    refreshUI(user.uid);
-                } else {
-                    setDoc(doc(db, "users", user.uid), userData);
-                }
-            });
+            startApp(user.uid);
         }
     });
 
-    function initCalendar(uid) {
-        calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-            initialView:'dayGridMonth', locale:'fr', firstDay:1,
-            headerToolbar: { left:'prev,next today', center:'title', right:'dayGridMonth,dayGridYear' },
-            eventClick: async (info) => {
-                if(confirm("Supprimer ce jour ?")) {
-                    userData.leaves = userData.leaves.filter(l => !(l.start === info.event.startStr && l.title === info.event.title));
-                    await setDoc(doc(db, "users", uid), userData);
+    // --- LOGIQUE APPLICATION ---
+    function startApp(uid) {
+        if(!calendar) {
+            calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+                initialView:'dayGridMonth', locale:'fr', firstDay:1,
+                headerToolbar: { left:'prev,next today', center:'title', right:'dayGridMonth,dayGridYear' },
+                datesSet: (info) => {
+                    const h = getHolidays(info.view.currentStart.getFullYear());
+                    const src = calendar.getEventSourceById('feries'); if(src) src.remove();
+                    calendar.addEventSource({ id:'feries', events: Object.keys(h).map(d=>({title:h[d], start:d, display:'background', backgroundColor:'#eeeeee'}))});
+                },
+                eventClick: async (info) => {
+                    if(info.event.display === 'background') return;
+                    if(confirm("Supprimer ce jour ?")) {
+                        userData.leaves = userData.leaves.filter(l => !(l.start === info.event.startStr && l.title === info.event.title));
+                        await setDoc(doc(db, "users", uid), userData);
+                    }
                 }
+            });
+            calendar.render();
+        }
+
+        onSnapshot(doc(db, "users", uid), (snap) => {
+            if(snap.exists()) {
+                userData = snap.data();
+                refreshAll();
+            } else {
+                setDoc(doc(db, "users", uid), userData);
             }
         });
-        calendar.render();
     }
 
-    function refreshUI(uid) {
+    function refreshAll() {
         const d = document.getElementById('quotas-display'), s = document.getElementById('leave-type-select'), a = document.getElementById('types-list-admin');
-        d.innerHTML = ''; s.innerHTML = '<option value="">-- Choisir --</option><option value="INFO_LIBRE">💡 Information libre</option>'; a.innerHTML = '';
+        d.innerHTML = ''; 
+        s.innerHTML = '<option value="">-- Choisir --</option><option value="INFO_LIBRE">💡 Information libre</option>'; 
+        a.innerHTML = '';
         
         Object.keys(userData.config).forEach(t => {
             const used = userData.leaves.filter(l => l.title === t && !l.isCustom).length;
             const rem = userData.config[t].quota - used;
-            d.innerHTML += `<div class="quota-card" style="border-left-color:${userData.config[t].color}"><strong>${t}</strong> <span>${rem}/${userData.config[t].quota}j</span></div>`;
+            d.innerHTML += `<div class="quota-card" style="border-left-color:${userData.config[t].color}"><strong>${t}</strong> <b>${rem}/${userData.config[t].quota}j</b></div>`;
             s.innerHTML += `<option value="${t}">${t}</option>`;
             
             const row = document.createElement('div');
             row.className = 'type-item-row';
-            row.innerHTML = `<span>${t} (${userData.config[t].quota}j)</span> <button style="color:red; border:none; background:none; cursor:pointer;" onclick="deleteType('${t}')">🗑️</button>`;
+            row.innerHTML = `<span>${t} (${userData.config[t].quota}j)</span>`;
+            const delBtn = document.createElement('button');
+            delBtn.innerText = '🗑️';
+            delBtn.style = 'background:none; border:none; cursor:pointer; color:red; font-size:1.2em;';
+            delBtn.onclick = async () => {
+                if(confirm(`Supprimer le type "${t}" et TOUS les congés associés ?`)) {
+                    userData.leaves = userData.leaves.filter(l => l.title !== t);
+                    delete userData.config[t];
+                    await setDoc(doc(db, "users", auth.currentUser.uid), userData);
+                }
+            };
+            row.appendChild(delBtn);
             a.appendChild(row);
         });
+
         calendar.removeAllEvents();
         calendar.addEventSource(userData.leaves);
     }
 
-    // Fonctions globales attachées à l'objet window pour être accessibles
-    window.deleteType = async (type) => {
-        if(confirm(`Supprimer ${type} ?`)) {
-            userData.leaves = userData.leaves.filter(l => l.title !== type);
-            delete userData.config[type];
-            await setDoc(doc(db, "users", auth.currentUser.uid), userData);
-        }
+    // --- INTERACTIONS ---
+    document.getElementById('leave-type-select').onchange = (e) => {
+        document.getElementById('custom-info-group').style.display = (e.target.value === 'INFO_LIBRE') ? 'block' : 'none';
     };
 
     document.getElementById('toggle-settings-btn').onclick = () => {
-        const c = document.getElementById('settings-content'), b = document.getElementById('toggle-settings-btn');
-        c.style.display = c.style.display === 'none' ? 'block' : 'none';
-        b.innerText = c.style.display === 'none' ? 'Afficher' : 'Masquer';
+        const s = document.getElementById('settings-content'), b = document.getElementById('toggle-settings-btn');
+        const isHidden = s.style.display === 'none';
+        s.style.display = isHidden ? 'block' : 'none';
+        b.innerText = isHidden ? 'Masquer' : 'Afficher';
     };
 
     document.getElementById('save-type-btn').onclick = async () => {
-        const n = document.getElementById('new-type-name').value, q = document.getElementById('new-type-quota').value, c = document.getElementById('new-type-color').value;
+        const n = document.getElementById('new-type-name').value.trim(), q = document.getElementById('new-type-quota').value, c = document.getElementById('new-type-color').value;
         if(n && q) {
             userData.config[n] = { quota: parseInt(q), color: c };
             await setDoc(doc(db, "users", auth.currentUser.uid), userData);
+            document.getElementById('new-type-name').value = '';
+            document.getElementById('new-type-quota').value = '';
         }
     };
 
     document.getElementById('add-leave-btn').onclick = async () => {
         const start = document.getElementById('start-date').value, end = document.getElementById('end-date').value, type = document.getElementById('leave-type-select').value;
-        if(!start || !type) return alert("Dates et type requis");
+        if(!start || !type) return alert("Veuillez remplir les dates et le type.");
+        
         let cur = new Date(start), last = new Date(end || start);
         while(cur <= last) {
-            if(cur.getDay() !== 0 && cur.getDay() !== 6) {
+            if(cur.getDay() !== 0 && cur.getDay() !== 6) { 
                 const isC = (type === 'INFO_LIBRE');
                 userData.leaves.push({
                     title: isC ? document.getElementById('custom-info-text').value : type,
                     start: cur.toISOString().split('T')[0],
                     backgroundColor: isC ? '#bdc3c7' : userData.config[type].color,
+                    borderColor: '#ddd',
                     isCustom: isC
                 });
             }
             cur.setDate(cur.getDate()+1);
         }
         await setDoc(doc(db, "users", auth.currentUser.uid), userData);
-    };
-
-    document.getElementById('leave-type-select').onchange = (e) => {
-        document.getElementById('custom-info-group').style.display = e.target.value === 'INFO_LIBRE' ? 'block' : 'none';
+        document.getElementById('start-date').value = '';
+        document.getElementById('end-date').value = '';
+        document.getElementById('custom-info-text').value = '';
     };
 </script>
 </body>
