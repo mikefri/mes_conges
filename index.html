@@ -190,6 +190,10 @@
                 <option value="">-- Choisir --</option>
                 <option value="INFO_LIBRE">💡 Information libre</option>
             </select>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 10px;">
+            <input type="checkbox" id="half-day-check" style="width: auto; margin: 0;"> 
+            <span>Matin ou Après-midi (0.5j)</span>
+            </label>
             <div id="custom-info-group" style="display:none;">
                 <input type="text" id="custom-info-text" placeholder="Titre (ex: Formation)">
             </div>
@@ -301,13 +305,36 @@ onAuthStateChanged(auth, (user) => {
                     const src = calendar.getEventSourceById('feries'); if(src) src.remove();
                     calendar.addEventSource({ id:'feries', events: Object.keys(h).map(d=>({title:h[d], start:d, display:'background', backgroundColor:'#eeeeee'}))});
                 },
-                eventClick: async (info) => {
-                    if(info.event.display === 'background') return;
-                    if(confirm("Supprimer ce jour ?")) {
-                        userData.leaves = userData.leaves.filter(l => !(l.start === info.event.startStr && l.title === info.event.title));
-                        await setDoc(doc(db, "users", uid), userData);
-                    }
-                }
+eventClick: async (info) => {
+    if(info.event.display === 'background') return;
+
+    Swal.fire({
+        title: 'Supprimer ce jour ?',
+        text: `Voulez-vous retirer "${info.event.title}" du calendrier ?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#e74c3c', // Rouge danger
+        cancelButtonColor: '#95a5a6',
+        confirmButtonText: 'Oui, supprimer',
+        cancelButtonText: 'Annuler'
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            // Logique de suppression
+            userData.leaves = userData.leaves.filter(l => !(l.start === info.event.startStr && l.title === info.event.title));
+            
+            // Mise à jour Firebase
+            await setDoc(doc(db, "users", auth.currentUser.uid), userData);
+            
+            // Petit message de confirmation (optionnel)
+            Swal.fire({
+                title: 'Supprimé !',
+                icon: 'success',
+                timer: 1000,
+                showConfirmButton: false
+            });
+        }
+    });
+}
             });
             calendar.render();
         }
@@ -329,9 +356,14 @@ onAuthStateChanged(auth, (user) => {
         a.innerHTML = '';
         
         Object.keys(userData.config).forEach(t => {
-            const used = userData.leaves.filter(l => l.title === t && !l.isCustom).length;
+            const used = userData.leaves
+    .filter(l => (l.title === t || l.title === t + " (0.5j)") && !l.isCustom)
+    .reduce((acc, l) => acc + (l.value || 1), 0);
             const rem = userData.config[t].quota - used;
-            d.innerHTML += `<div class="quota-card" style="border-left-color:${userData.config[t].color}"><strong>${t}</strong> <b>${rem}/${userData.config[t].quota}j</b></div>`;
+            d.innerHTML += `<div class="quota-card" style="border-left-color:${userData.config[t].color}">
+            <strong>${t}</strong> 
+            <b>${Number(rem)} / ${userData.config[t].quota}j</b>
+        </div>`;
             s.innerHTML += `<option value="${t}">${t}</option>`;
             
             const row = document.createElement('div');
@@ -424,12 +456,29 @@ document.getElementById('reset-year-btn').onclick = async () => {
     }
 };
 
+    // Masquer la date de fin si c'est une demi-journée
+document.getElementById('half-day-check').onchange = (e) => {
+    const endDateInput = document.getElementById('end-date');
+    // On cherche le label "Au :" qui est juste avant l'input
+    const endDateLabel = endDateInput.previousElementSibling; 
     
+    if(e.target.checked) {
+        endDateInput.style.display = 'none';
+        if(endDateLabel) endDateLabel.style.display = 'none';
+        endDateInput.value = ""; // Sécurité : on vide la fin
+    } else {
+        endDateInput.style.display = 'block';
+        if(endDateLabel) endDateLabel.style.display = 'block';
+    }
+};
 
-    document.getElementById('add-leave-btn').onclick = async () => {
-        const start = document.getElementById('start-date').value, end = document.getElementById('end-date').value, type = document.getElementById('leave-type-select').value;
-        if(!start || !type) {
-        // --- REMPLACEMENT ICI ---
+document.getElementById('add-leave-btn').onclick = async () => {
+    const start = document.getElementById('start-date').value;
+    const end = document.getElementById('end-date').value;
+    const type = document.getElementById('leave-type-select').value;
+    const isHalfDay = document.getElementById('half-day-check').checked; // Récupère l'état de la checkbox
+
+    if (!start || !type) {
         return Swal.fire({
             icon: 'warning',
             title: 'Attention',
@@ -437,26 +486,53 @@ document.getElementById('reset-year-btn').onclick = async () => {
             confirmButtonColor: '#2c3e50'
         });
     }
-        
-        let cur = new Date(start), last = new Date(end || start);
-        while(cur <= last) {
-            if(cur.getDay() !== 0 && cur.getDay() !== 6) { 
-                const isC = (type === 'INFO_LIBRE');
+
+    const isC = (type === 'INFO_LIBRE');
+    const baseTitle = isC ? document.getElementById('custom-info-text').value : type;
+
+    if (isHalfDay) {
+        // --- CAS DEMI-JOURNÉE (0.5j) ---
+        // On ignore la date de fin, on ne prend que la date de début
+        userData.leaves.push({
+            title: baseTitle + " (0.5j)",
+            start: start,
+            backgroundColor: isC ? '#bdc3c7' : userData.config[type].color,
+            borderColor: '#ddd',
+            isCustom: isC,
+            value: 0.5 // On stocke 0.5 pour le calcul du compteur
+        });
+    } else {
+        // --- CAS JOURS ENTIERS (Boucle classique) ---
+        let cur = new Date(start);
+        let last = new Date(end || start);
+
+        while (cur <= last) {
+            if (cur.getDay() !== 0 && cur.getDay() !== 6) { // Hors week-end
                 userData.leaves.push({
-                    title: isC ? document.getElementById('custom-info-text').value : type,
+                    title: baseTitle,
                     start: cur.toISOString().split('T')[0],
                     backgroundColor: isC ? '#bdc3c7' : userData.config[type].color,
                     borderColor: '#ddd',
-                    isCustom: isC
+                    isCustom: isC,
+                    value: 1 // On stocke 1 pour le calcul du compteur
                 });
             }
-            cur.setDate(cur.getDate()+1);
+            cur.setDate(cur.getDate() + 1);
         }
-        await setDoc(doc(db, "users", auth.currentUser.uid), userData);
-        document.getElementById('start-date').value = '';
-        document.getElementById('end-date').value = '';
-        document.getElementById('custom-info-text').value = '';
-    };
+    }
+
+    // Sauvegarde Firebase
+    await setDoc(doc(db, "users", auth.currentUser.uid), userData);
+
+    // Reset du formulaire
+    document.getElementById('start-date').value = '';
+    document.getElementById('end-date').value = '';
+    document.getElementById('custom-info-text').value = '';
+    document.getElementById('half-day-check').checked = false;
+    
+    // Optionnel : réafficher le champ "Au" s'il était masqué
+    document.getElementById('end-date').style.display = 'block';
+};
 
     // --- GESTION DE LA DECONNEXION ---
     document.getElementById('logout-btn').onclick = async () => {
