@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Planning Matrix - Vue Annuelle</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root { --primary: #2c3e50; }
         body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; margin: 0; }
@@ -15,11 +16,29 @@
         .day-label { background: #f8f9fa; font-weight: bold; width: 45px; font-size: 11px; }
         .cell-txt { font-size: 9px; font-weight: bold; text-transform: uppercase; white-space: nowrap; overflow: hidden; display: block; letter-spacing: -0.5px; color: #000; }
         .is-weekend { background-color: #f1f4f6; }
+        /* Nouveau style pour le bouton export */
+    .btn-export { 
+        background: #27ae60; 
+        color: white; 
+        border: none; 
+        padding: 10px 20px; 
+        border-radius: 5px; 
+        font-weight: bold; 
+        cursor: pointer; 
+        margin-left: 10px;
+    }
+    .btn-export:hover { background: #219150; }
+    
+    /* Style pour optimiser l'impression PDF */
+    @media print {
+        .btn-back, .btn-export { display: none; }
+    }
     </style>
 </head>
 <body>
     <div class="header">
         <h1 id="year-title">📅 Planning</h1>
+        <button onclick="exportToPDF()" class="btn-export">📥 Exporter PDF</button>
         <a href="index.html" class="btn-back">⬅ Retour Saisie</a>
     </div>
     <div class="matrix-container"><div id="matrix-wrapper">En attente de connexion...</div></div>
@@ -109,6 +128,21 @@
             }
             document.getElementById('matrix-wrapper').innerHTML = html + `</tbody></table>`;
         }
+
+        
+        window.exportToPDF = function() {
+    const element = document.getElementById('matrix-wrapper');
+    const options = {
+        margin: 5,
+        filename: `Planning_${new Date().getFullYear()}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } // Paysage pour la matrice
+    };
+
+    // On lance la génération
+    html2pdf().set(options).from(element).save();
+};
     </script>
 </body>
 </html>
