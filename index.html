@@ -433,7 +433,21 @@ document.getElementById('reset-year-btn').onclick = async () => {
     }
 };
 
+    // Masquer la date de fin si c'est une demi-journée
+document.getElementById('half-day-check').onchange = (e) => {
+    const endDateInput = document.getElementById('end-date');
+    // On cherche le label "Au :" qui est juste avant l'input
+    const endDateLabel = endDateInput.previousElementSibling; 
     
+    if(e.target.checked) {
+        endDateInput.style.display = 'none';
+        if(endDateLabel) endDateLabel.style.display = 'none';
+        endDateInput.value = ""; // Sécurité : on vide la fin
+    } else {
+        endDateInput.style.display = 'block';
+        if(endDateLabel) endDateLabel.style.display = 'block';
+    }
+};
 
 document.getElementById('add-leave-btn').onclick = async () => {
     const start = document.getElementById('start-date').value;
