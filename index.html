@@ -201,6 +201,11 @@
                 <input type="number" id="new-type-quota" placeholder="Nombre de jours">
                 <input type="color" id="new-type-color" value="#3498db" style="height:40px; cursor:pointer;">
                 <button class="btn-action" id="save-type-btn" style="background:var(--success);">+ Créer ce type</button>
+
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
+                <button id="reset-year-btn" class="btn-action" style="background: var(--danger);">🚨 Réinitialiser l'année</button>
+                <p style="font-size: 0.7em; color: #666; margin-top: -5px;">(Supprime tous les congés et remet les compteurs à zéro)</p>
+                
             </div>
         </div>
 
@@ -382,6 +387,42 @@ delBtn.onclick = () => {
             document.getElementById('new-type-quota').value = '';
         }
     };
+
+    // FONCTION RESET ANNEE
+document.getElementById('reset-year-btn').onclick = async () => {
+    // Utilisation de SweetAlert2 pour confirmer l'action
+    const result = await Swal.fire({
+        title: 'Action irréversible !',
+        text: "Voulez-vous vraiment supprimer TOUS vos congés posés et réinitialiser vos compteurs ?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e74c3c', // Rouge danger
+        cancelButtonColor: '#95a5a6',
+        confirmButtonText: 'Oui, tout effacer',
+        cancelButtonText: 'Annuler'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            // 1. On vide la liste des congés
+            userData.leaves = [];
+            
+            // 2. On met à jour la base de données Firebase
+            await setDoc(doc(db, "users", auth.currentUser.uid), userData);
+            
+            // 3. Message de succès
+            Swal.fire(
+                'Réinitialisé !',
+                'Votre calendrier est à nouveau vide pour la nouvelle année.',
+                'success'
+            );
+        } catch (err) {
+            Swal.fire('Erreur', "La réinitialisation a échoué : " + err.message, 'error');
+        }
+    }
+};
+
+    
 
     document.getElementById('add-leave-btn').onclick = async () => {
         const start = document.getElementById('start-date').value, end = document.getElementById('end-date').value, type = document.getElementById('leave-type-select').value;
