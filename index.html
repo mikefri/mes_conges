@@ -149,6 +149,7 @@
     margin-top: 30px; 
     position: relative;
 }
+        #help-btn:hover { background: var(--info) !important; color: white !important; }
     </style>
 </head>
 <body>
@@ -170,7 +171,7 @@
     <div class="header-left">
         <span>👤 <strong id="user-display"></strong></span>
         <button id="logout-btn" style="background:var(--danger); color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; margin-left:10px;">Déconnexion</button>
-        <button id="help-btn" style="background:var(--info); color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; margin-left:10px;">❓ Aide</button>
+        <button id="help-btn" title="Aide" style="background:none; color:var(--info); border:2px solid var(--info); width:30px; height:30px; border-radius:50%; cursor:pointer; margin-left:10px; font-weight:bold; display:flex; align-items:center; justify-content:center; padding:0;">?</button>
     </div>
     <a href="planning.html" class="btn-nav">📅 Planning Global</a>
 </div>
