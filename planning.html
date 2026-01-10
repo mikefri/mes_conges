@@ -31,23 +31,18 @@
     
     /* Style pour optimiser l'impression PDF */
 @media print {
-    /* Réduit la hauteur des lignes uniquement lors de l'export */
+    .matrix-table {
+        width: 100% !important;
+        border-spacing: 0;
+    }
     .matrix-table th, .matrix-table td {
-        height: 18px !important; 
-        line-height: 18px !important;
-        padding: 0 !important;
+        height: 18px !important; /* Hauteur compacte pour éviter la page 2 */
+        padding: 1px !important;
     }
-    
-    /* Réduit la taille du texte pour éviter les débordements */
-    .cell-txt {
-        font-size: 7px !important;
-        display: block;
-        width: 100%;
-    }
-
-    .day-label {
-        font-size: 9px !important;
-        width: 30px !important;
+    /* Supprime les éléments vides qui pourraient pousser le contenu sur une page 2 */
+    body, html {
+        height: auto !important;
+        overflow: hidden !important;
     }
 }
         
@@ -147,36 +142,39 @@
             document.getElementById('matrix-wrapper').innerHTML = html + `</tbody></table>`;
         }
 
-        
-        window.exportToPDF = function() {
+        // fonction export PDF 
+       window.exportToPDF = function() {
     const element = document.getElementById('matrix-wrapper');
     
     const opt = {
-        margin: [5, 2, 5, 2], // Marges très réduites (5mm haut/bas, 2mm côtés)
+        margin: [5, 5, 5, 5], // Marges réduites pour gagner de l'espace
         filename: `Planning_${new Date().getFullYear()}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
-            scale: 2, // Garde une bonne netteté malgré la réduction
-            useCORS: true 
+            scale: 2, 
+            useCORS: true,
+            logging: false 
         },
         jsPDF: { 
             unit: 'mm', 
             format: 'a4', 
-            orientation: 'landscape' // Le mode paysage reste le plus adapté aux 12 colonnes
-        }
+            orientation: 'landscape' 
+        },
+        // Force le script à ignorer les calculs de saut de page internes
+        pagebreak: { mode: 'avoid-all' } 
     };
 
-    // --- LOGIQUE DE REDUCTION POUR UNE PAGE UNIQUE ---
+    // --- OPTIMISATION DU FORMAT ---
     const originalStyle = element.style.cssText;
 
-    // On réduit l'échelle à 70% pour que les 31 lignes tiennent en hauteur
-    // On élargit un peu le conteneur pour que les 12 mois tiennent en largeur
-    element.style.transform = "scale(0.70)";
-    element.style.transformOrigin = "top left";
-    element.style.width = "1350px"; 
+    // 1. On augmente la largeur à 100% de la page paysage
+    // 2. On réduit légèrement la hauteur (0.68) pour être sûr que la ligne 31 ne déclenche pas une page 2
+    element.style.transform = "scale(0.72)"; 
+    element.style.transformOrigin = "top center"; // Centrage horizontal
+    element.style.width = "1400px"; // Elargissement horizontal
+    element.style.marginBottom = "-100px"; // Astuce pour supprimer la marge fantôme en bas
 
     html2pdf().set(opt).from(element).save().then(() => {
-        // On remet le style normal sur la page web après l'export
         element.style.cssText = originalStyle;
     });
 };
