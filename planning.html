@@ -30,21 +30,31 @@
     .btn-export:hover { background: #219150; }
     
     /* Style pour optimiser l'impression PDF */
-@media print {
-    .matrix-table {
+/* CLASSE SPECIALE EXPORT (activée via JS) */
+    .pdf-export-mode .matrix-table {
         width: 100% !important;
-        border-spacing: 0;
+        min-width: 100% !important;
+        table-layout: fixed !important;
     }
-    .matrix-table th, .matrix-table td {
-        height: 18px !important; /* Hauteur compacte pour éviter la page 2 */
-        padding: 1px !important;
+
+    .pdf-export-mode .matrix-table td, 
+    .pdf-export-mode .matrix-table th {
+        height: 18px !important; /* Hauteur réduite pour que 31 lignes tiennent sur un A4 */
+        font-size: 8px !important;
+        padding: 0 !important;
     }
-    /* Supprime les éléments vides qui pourraient pousser le contenu sur une page 2 */
-    body, html {
+
+    .pdf-export-mode .cell-txt {
+        font-size: 7px !important;
+        line-height: 1 !important;
+    }
+
+    /* Supprimer la page blanche fantôme */
+    .pdf-export-mode {
+        margin: 0 !important;
+        padding: 0 !important;
         height: auto !important;
-        overflow: hidden !important;
     }
-}
         
     </style>
 </head>
@@ -146,36 +156,25 @@
        window.exportToPDF = function() {
     const element = document.getElementById('matrix-wrapper');
     
+    // On ajoute temporairement une classe pour forcer les dimensions PDF
+    element.classList.add('pdf-export-mode');
+
     const opt = {
-        margin: [5, 5, 5, 5], // Marges réduites pour gagner de l'espace
+        margin: [5, 5, 5, 5],
         filename: `Planning_${new Date().getFullYear()}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
+        image: { type: 'jpeg', quality: 1 },
         html2canvas: { 
             scale: 2, 
             useCORS: true,
-            logging: false 
+            letterRendering: true
         },
-        jsPDF: { 
-            unit: 'mm', 
-            format: 'a4', 
-            orientation: 'landscape' 
-        },
-        // Force le script à ignorer les calculs de saut de page internes
-        pagebreak: { mode: 'avoid-all' } 
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+        pagebreak: { mode: 'avoid-all' } // Empêche strictement la coupure
     };
 
-    // --- OPTIMISATION DU FORMAT ---
-    const originalStyle = element.style.cssText;
-
-    // 1. On augmente la largeur à 100% de la page paysage
-    // 2. On réduit légèrement la hauteur (0.68) pour être sûr que la ligne 31 ne déclenche pas une page 2
-    element.style.transform = "scale(0.72)"; 
-    element.style.transformOrigin = "top center"; // Centrage horizontal
-    element.style.width = "1400px"; // Elargissement horizontal
-    element.style.marginBottom = "-100px"; // Astuce pour supprimer la marge fantôme en bas
-
     html2pdf().set(opt).from(element).save().then(() => {
-        element.style.cssText = originalStyle;
+        // On retire la classe après l'export
+        element.classList.remove('pdf-export-mode');
     });
 };
     </script>
