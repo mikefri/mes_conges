@@ -31,15 +31,12 @@
     
     /* Style pour optimiser l'impression PDF */
 @media print {
-    .matrix-table {
-        font-size: 8px; /* Réduit légèrement la police pour l'export */
-        width: 100% !important;
-        min-width: 0 !important;
+        .matrix-table th, .matrix-table td { 
+            height: 18px !important; /* Réduit la hauteur des lignes */
+            font-size: 8px !important; 
+        }
+        .cell-txt { font-size: 7px !important; }
     }
-    .cell-txt {
-        font-size: 7px !important;
-    }
-}
         
     </style>
 </head>
@@ -141,33 +138,39 @@
         window.exportToPDF = function() {
     const element = document.getElementById('matrix-wrapper');
     
-    // On clone l'élément pour ne pas modifier l'affichage à l'écran
-    const options = {
-        margin: [10, 5, 10, 5], // Haut, Gauche, Bas, Droite
+    // Configuration de l'export
+    const opt = {
+        margin: [5, 5, 5, 5],
         filename: `Planning_${new Date().getFullYear()}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
-            scale: 2, 
-            useCORS: true, 
-            letterRendering: true 
+            scale: 2, // Meilleure résolution
+            useCORS: true 
         },
         jsPDF: { 
             unit: 'mm', 
             format: 'a4', 
             orientation: 'landscape' 
-        },
-        // Ce paramètre force le contenu à tenir sur une page
-        pagebreak: { mode: 'avoid-all' } 
+        }
     };
 
-    // On utilise une petite astuce CSS temporaire pour forcer la largeur
+    // --- ASTUCE POUR TOUT FAIRE TENIR SUR UNE PAGE ---
+    // 1. On sauvegarde le style original
+    const originalTransform = element.style.transform;
+    const originalTransformOrigin = element.style.transformOrigin;
     const originalWidth = element.style.width;
-    element.style.width = "1100px"; // Largeur fixe pour stabiliser le rendu
 
-    html2pdf().set(options).from(element).toPdf().get('pdf').then(function (pdf) {
-        // Optionnel : On peut ici ajuster manuellement si besoin avant la sauvegarde
-    }).save().then(() => {
-        element.style.width = originalWidth; // On remet la largeur d'origine
+    // 2. On réduit visuellement le tableau pour l'export (80% de sa taille)
+    element.style.transform = "scale(0.85)"; 
+    element.style.transformOrigin = "top left";
+    element.style.width = "1150px"; // On fixe la largeur pour éviter les coupures
+
+    // 3. On génère le PDF
+    html2pdf().set(opt).from(element).save().then(() => {
+        // 4. On remet le style d'origine après l'export
+        element.style.transform = originalTransform;
+        element.style.transformOrigin = originalTransformOrigin;
+        element.style.width = originalWidth;
     });
 };
     </script>
