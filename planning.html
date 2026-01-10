@@ -30,9 +30,17 @@
     .btn-export:hover { background: #219150; }
     
     /* Style pour optimiser l'impression PDF */
-    @media print {
-        .btn-back, .btn-export { display: none; }
+@media print {
+    .matrix-table {
+        font-size: 8px; /* Réduit légèrement la police pour l'export */
+        width: 100% !important;
+        min-width: 0 !important;
     }
+    .cell-txt {
+        font-size: 7px !important;
+    }
+}
+        
     </style>
 </head>
 <body>
