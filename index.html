@@ -220,14 +220,22 @@
         } catch(err) { alert("Erreur : " + err.message); }
     };
 
-    onAuthStateChanged(auth, (user) => {
-        if(user) {
-            document.getElementById('auth-container').style.display='none';
-            document.getElementById('main-app').style.display='block';
-            document.getElementById('user-display').innerText = user.email;
-            startApp(user.uid);
-        }
-    });
+onAuthStateChanged(auth, (user) => {
+    const authContainer = document.getElementById('auth-container');
+    const mainApp = document.getElementById('main-app');
+
+    if(user) {
+        // L'utilisateur est connecté
+        authContainer.style.display = 'none';
+        mainApp.style.display = 'block';
+        document.getElementById('user-display').innerText = user.email;
+        startApp(user.uid);
+    } else {
+        // L'utilisateur n'est PAS connecté
+        mainApp.style.display = 'none';
+        authContainer.style.display = 'flex'; // On n'affiche la connexion que si nécessaire
+    }
+});
 
     // --- LOGIQUE APPLICATION ---
     function startApp(uid) {
