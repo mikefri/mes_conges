@@ -1,4 +1,12 @@
-const CACHE_NAME = 'planning-v2'; // Le changement ici déclenche la mise à jour
+const CACHE_VERSION = '1.3.0';
+
+self.addEventListener('message', (event) => {
+  if (event.data === 'getVersion') {
+    event.ports[0].postMessage(CACHE_VERSION);
+  }
+});
+
+
 const ASSETS = [
   '/',
   '/index.html',
