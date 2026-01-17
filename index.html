@@ -19,20 +19,29 @@
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js')
       .then(registration => {
-        console.log("Service Worker Planning Enregistré");
-        
-        // On attend que le SW soit prêt pour demander la version
-        navigator.serviceWorker.ready.then(swRegistration => {
+        // Fonction pour demander la version au SW
+        const requestVersion = (sw) => {
           const messageChannel = new MessageChannel();
-          
           messageChannel.port1.onmessage = (event) => {
-            document.getElementById('app-version').innerText = event.data;
+            const versionElement = document.getElementById('app-version');
+            if (versionElement) versionElement.innerText = event.data;
           };
+          sw.postMessage('getVersion', [messageChannel.port2]);
+        };
 
-          // On envoie la demande au Service Worker actif
-          if (swRegistration.active) {
-            swRegistration.active.postMessage('getVersion', [messageChannel.port2]);
-          }
+        // Si un SW est déjà actif
+        if (registration.active) {
+          requestVersion(registration.active);
+        }
+
+        // Écouter si un nouveau SW prend le contrôle
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'activated') {
+              requestVersion(newWorker);
+            }
+          });
         });
       })
       .catch(err => console.log("Erreur SW:", err));
@@ -176,7 +185,7 @@ if ('serviceWorker' in navigator) {
 
     <div style="margin-top: 25px; color: rgba(255,255,255,0.7); font-size: 0.8em; text-align: center; max-width: 320px;">
         <div style="font-weight: bold; margin-bottom: 10px; color: white;">
-    Version <span id="app-version">...</span>
+    Version <span id="app-version">Chargement...</span>
 </div>
         
 
