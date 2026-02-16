@@ -1,589 +1,1230 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="MonPlanning">
-    <meta name="theme-color" content="#2c3e50">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Congés">
+  <meta name="theme-color" content="#0f1117">
+  <title>Congés · Planning</title>
 
-    <title>Mon Planning Congés</title>
-    <meta name="description" content="Gérez vos congés, RTT et plannings annuels de manière simple et sécurisée.">
-    
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon.png">
-    <link rel="icon" type="image/png" href="icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <script>
-if ('serviceWorker' in navigator) {
-    // Fonction robuste pour demander la version
-    const askVersion = (worker) => {
-      if (!worker) return;
-      const messageChannel = new MessageChannel();
-      messageChannel.port1.onmessage = (event) => {
-        const el = document.getElementById('app-version');
-        if (el) el.innerText = event.data;
-      };
-      worker.postMessage('getVersion', [messageChannel.port2]);
-    };
+  <style>
+    /* ── RESET & TOKENS ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    navigator.serviceWorker.register('sw.js').then(reg => {
-      console.log("Service Worker Planning Enregistré");
+    :root {
+      --ink:      #0f1117;
+      --ink-soft: #6b7280;
+      --ink-faint:#c4c9d4;
+      --surface:  #ffffff;
+      --bg:       #f5f6fa;
+      --border:   #e5e7eb;
+      --accent:   #4f6ef7;
+      --accent-h: #3a57e8;
+      --danger:   #ef4444;
+      --success:  #22c55e;
+      --warn:     #f59e0b;
+      --radius:   14px;
+      --radius-sm:8px;
+      --shadow:   0 2px 8px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md:0 8px 24px rgba(0,0,0,.10), 0 2px 6px rgba(0,0,0,.06);
+      --transition: .18s ease;
+    }
 
-      // Cas 1 : Le SW est déjà actif et contrôle la page
-      if (reg.active) askVersion(reg.active);
+    html, body {
+      height: 100%;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      background: var(--bg);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+    }
 
-      // Cas 2 : Un nouveau SW est en train de s'installer
-      reg.addEventListener('updatefound', () => {
-        const newWorker = reg.installing;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'activated') askVersion(newWorker);
-        });
-      });
-    }).catch(err => console.log("Erreur SW:", err));
+    /* ── AUTH SCREEN ────────────────────────────────────────── */
+    #auth-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: var(--ink);
+      background-image:
+        radial-gradient(ellipse 60% 60% at 20% 20%, rgba(79,110,247,.18) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 50% at 80% 80%, rgba(34,197,94,.10) 0%, transparent 70%);
+      padding: 20px;
+    }
 
-    // Cas 3 : Sécurité quand le contrôle change (indispensable avec clients.claim)
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      askVersion(navigator.serviceWorker.controller);
-    });
-  }
-    </script>
+    .auth-card {
+      background: var(--surface);
+      border-radius: 24px;
+      box-shadow: 0 32px 80px rgba(0,0,0,.35);
+      width: 100%;
+      max-width: 380px;
+      overflow: hidden;
+      animation: cardIn .4s cubic-bezier(.34,1.56,.64,1);
+    }
 
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <style>
-        :root { --primary: #2c3e50; --bg: #f4f7f6; --danger: #e74c3c; --success: #27ae60; --info: #3498db; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: #333; }
+    @keyframes cardIn {
+      from { opacity:0; transform:translateY(24px) scale(.96); }
+      to   { opacity:1; transform:translateY(0) scale(1); }
+    }
 
-        /* ZONE AUTHENTIFICATION */
-        #auth-container {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: #2c3e50;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 9999;
-        }
-        
-        .app-main-title {
-            color: white;
-            font-size: 2.8em;
-            margin-bottom: 20px;
-            font-weight: 800;
-            text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
-        }
+    .auth-header {
+      background: linear-gradient(135deg, #1a1f2e 0%, #2d3a5e 100%);
+      padding: 36px 32px 28px;
+      text-align: center;
+    }
 
-        .auth-box {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            width: 100%;
-            max-width: 350px;
-            text-align: center;
-            margin-top: 30px; 
-            position: relative;
-        }
+    .auth-icon {
+      font-size: 2.8em;
+      display: block;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 4px 12px rgba(79,110,247,.4));
+    }
 
-        .auth-logo {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: #fff;
-            padding: 5px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            margin-top: -60px;
-            border: 4px solid white;
-        }
+    .auth-header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.7em;
+      color: white;
+      font-weight: 400;
+      letter-spacing: -.02em;
+    }
 
-        .auth-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+    .auth-header p {
+      color: rgba(255,255,255,.5);
+      font-size: .85em;
+      margin-top: 4px;
+    }
 
-        /* LAYOUT PRINCIPAL */
-        #main-app { display: none; }
-        
-        .header { 
-            display: flex;
-            background: #e9ecef;        
-            justify-content: space-between;
-            align-items: center; 
-            padding: 0 10px;
-            height: 60px;
-        }
-        .header-left { display: flex; align-items: center; gap: 15px; }
-        
-        .app-container { display: flex; height: calc(100vh - 60px); }
-        
-        /* SIDEBAR */
-        #sidebar { width: 350px; background: #e9ecef; border-right: 1px solid #ddd; padding: 20px; overflow-y: auto; box-sizing: border-box; }
-        .quota-card { background: #fff; border: 1px solid #eee; padding: 12px; margin-bottom: 10px; border-radius: 6px; border-left: 7px solid #ccc; display: flex; justify-content: space-between; align-items: center; }
-        
-        /* FORMULAIRES */
-        input[type="date"], select, input[type="text"], input[type="number"] { width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        
-        .btn-action { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
-        
-        .btn-nav { background: var(--info); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; text-decoration: none; font-size: 0.85em; display: inline-flex; align-items: center; gap: 5px; }
-        .btn-nav:hover { background: #2980b9; }
+    .auth-body { padding: 28px 32px 32px; }
 
-        /* CONFIGURATION / SETTINGS */
-        #settings-content { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-top: 10px; }
-        .type-item-row { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px; margin-bottom: 5px; border-radius: 4px; border: 1px solid #eee; font-size: 0.9em; }
-        
-        #calendar-container { flex-grow: 1; padding: 20px; background: white; overflow-y: auto; }
-        .btn-toggle { font-size: 0.75em; background: #95a5a6; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; float: right; }
-        
-        /* Force le texte en noir pour tous les événements du calendrier */
-        .fc-event-title, .fc-event-main { color: #000000 !important; }
-        
-        #help-btn:hover { background: var(--info) !important; color: white !important; }
+    .auth-tabs {
+      display: flex;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      padding: 3px;
+      margin-bottom: 24px;
+    }
 
-        /* Styles spécifiques pour les boutons radio de durée */
-        .duration-group {
-            margin-bottom: 15px;
-            background: white;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #ddd;
-        }
-        .duration-options {
-            display: flex;
-            gap: 15px;
-            margin-top: 5px;
-        }
-        .radio-label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-        .radio-label input {
-            width: auto;
-            margin-right: 5px;
-            margin-top: 0;
-            margin-bottom: 0;
-        }
-    </style>
+    .auth-tab {
+      flex: 1;
+      padding: 8px;
+      text-align: center;
+      font-size: .85em;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--ink-soft);
+      transition: var(--transition);
+      user-select: none;
+    }
+
+    .auth-tab.active {
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: var(--shadow);
+    }
+
+    .field { margin-bottom: 14px; }
+
+    .field label {
+      display: block;
+      font-size: .8em;
+      font-weight: 600;
+      color: var(--ink-soft);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: .95em;
+      color: var(--ink);
+      outline: none;
+      transition: var(--transition);
+      background: var(--bg);
+    }
+
+    .field input:focus {
+      border-color: var(--accent);
+      background: white;
+      box-shadow: 0 0 0 3px rgba(79,110,247,.12);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 13px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: .95em;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      letter-spacing: .01em;
+      margin-top: 4px;
+    }
+
+    .btn-primary:hover { background: var(--accent-h); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,110,247,.3); }
+    .btn-primary:active { transform: translateY(0); }
+
+    /* ── MAIN APP ───────────────────────────────────────────── */
+    #main-app {
+      display: none;
+      height: 100vh;
+      flex-direction: column;
+    }
+
+    /* TOP NAV */
+    .topbar {
+      height: 60px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar-brand {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.2em;
+      color: var(--ink);
+      font-weight: 400;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topbar-brand span { font-size: 1.2em; }
+
+    .topbar-spacer { flex: 1; }
+
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 5px 14px 5px 8px;
+      font-size: .82em;
+      font-weight: 500;
+      color: var(--ink);
+    }
+
+    .user-avatar {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: .75em;
+      font-weight: 700;
+    }
+
+    .btn-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1em;
+      transition: var(--transition);
+      color: var(--ink-soft);
+    }
+
+    .btn-icon:hover { border-color: var(--accent); color: var(--accent); background: rgba(79,110,247,.05); }
+
+    /* LAYOUT */
+    .workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* PANEL */
+    .panel {
+      width: 320px;
+      min-width: 320px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-section {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-size: .7em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--ink-faint);
+      margin-bottom: 12px;
+    }
+
+    /* QUOTA CARDS */
+    .quota-grid { display: flex; flex-direction: column; gap: 8px; }
+
+    .quota-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      transition: var(--transition);
+    }
+
+    .quota-card:hover { border-color: var(--ink-faint); }
+
+    .quota-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .quota-name { flex: 1; font-weight: 500; font-size: .9em; }
+
+    .quota-nums {
+      font-size: .82em;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .quota-sub { font-size: .72em; color: var(--ink-soft); margin-top: 1px; }
+
+    .quota-bar-track {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .quota-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width .4s ease;
+    }
+
+    /* FORM */
+    .form-row { margin-bottom: 14px; }
+
+    .form-label {
+      display: block;
+      font-size: .78em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--ink-soft);
+      margin-bottom: 5px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: .9em;
+      color: var(--ink);
+      background: var(--bg);
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .form-input:focus {
+      border-color: var(--accent);
+      background: white;
+      box-shadow: 0 0 0 3px rgba(79,110,247,.10);
+    }
+
+    /* DATE ROW */
+    .date-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .date-row.single { grid-template-columns: 1fr; }
+
+    /* TYPE SELECTOR */
+    .type-selector {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .type-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      cursor: pointer;
+      transition: var(--transition);
+      user-select: none;
+    }
+
+    .type-option:hover { border-color: var(--ink-faint); }
+    .type-option.selected { border-color: var(--accent); background: rgba(79,110,247,.05); }
+
+    .type-option-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .type-option-name { flex: 1; font-weight: 500; font-size: .88em; }
+    .type-option-remain { font-size: .78em; color: var(--ink-soft); font-weight: 600; }
+
+    /* DURATION PILLS */
+    .duration-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .dur-pill {
+      padding: 8px 4px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      text-align: center;
+      font-size: .82em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      color: var(--ink-soft);
+      user-select: none;
+    }
+
+    .dur-pill:hover { border-color: var(--ink-faint); color: var(--ink); }
+    .dur-pill.selected { border-color: var(--accent); background: rgba(79,110,247,.08); color: var(--accent); }
+
+    /* SUBMIT BUTTON */
+    .btn-submit {
+      width: 100%;
+      padding: 13px;
+      background: var(--ink);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: .9em;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-submit:hover { background: #1e2332; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,.15); }
+    .btn-submit:active { transform: translateY(0); }
+
+    /* CONFIG SECTION */
+    .config-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .config-toggle:hover { background: var(--bg); }
+
+    .config-toggle-label {
+      font-size: .78em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--ink-faint);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chevron {
+      font-size: .7em;
+      transition: transform .2s;
+      color: var(--ink-faint);
+    }
+
+    .chevron.open { transform: rotate(180deg); }
+
+    .config-body {
+      display: none;
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .config-body.open { display: block; }
+
+    .type-list-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: white;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      margin-bottom: 6px;
+      font-size: .88em;
+    }
+
+    .type-list-item-name { flex: 1; font-weight: 500; }
+
+    .btn-del {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1em;
+      color: var(--ink-faint);
+      transition: var(--transition);
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+
+    .btn-del:hover { color: var(--danger); background: rgba(239,68,68,.08); }
+
+    .config-new-type {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .config-new-type-full { grid-column: 1/-1; }
+
+    .config-new-type input {
+      padding: 9px 11px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: .88em;
+      outline: none;
+      background: white;
+      color: var(--ink);
+      transition: var(--transition);
+    }
+
+    .config-new-type input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(79,110,247,.10);
+    }
+
+    input[type="color"].config-color {
+      height: 38px;
+      width: 38px;
+      padding: 2px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      cursor: pointer;
+      background: white;
+    }
+
+    .btn-add-type {
+      grid-column: 1/-1;
+      padding: 10px;
+      background: var(--success);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: .85em;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn-add-type:hover { background: #16a34a; }
+
+    .btn-danger {
+      width: 100%;
+      padding: 10px;
+      background: rgba(239,68,68,.08);
+      color: var(--danger);
+      border: 1.5px solid rgba(239,68,68,.2);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: .82em;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-top: 12px;
+    }
+
+    .btn-danger:hover { background: rgba(239,68,68,.15); }
+
+    /* CALENDAR AREA */
+    .calendar-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      background: var(--bg);
+    }
+
+    .fc {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      padding: 20px;
+    }
+
+    .fc-toolbar-title {
+      font-family: 'DM Serif Display', serif !important;
+      font-size: 1.4em !important;
+      font-weight: 400 !important;
+      color: var(--ink) !important;
+      letter-spacing: -.02em;
+    }
+
+    .fc-button-primary {
+      background: var(--ink) !important;
+      border-color: var(--ink) !important;
+      border-radius: var(--radius-sm) !important;
+      font-family: 'DM Sans', sans-serif !important;
+      font-size: .8em !important;
+      font-weight: 600 !important;
+      padding: 7px 14px !important;
+      transition: var(--transition) !important;
+    }
+
+    .fc-button-primary:hover { opacity: .85 !important; }
+    .fc-button-primary:not(.fc-button-active):focus { box-shadow: none !important; }
+    .fc-button-active { background: var(--accent) !important; border-color: var(--accent) !important; }
+
+    .fc-col-header-cell-cushion {
+      font-weight: 600 !important;
+      font-size: .8em !important;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--ink-soft) !important;
+      text-decoration: none !important;
+    }
+
+    .fc-daygrid-day-number {
+      font-size: .82em !important;
+      font-weight: 500 !important;
+      color: var(--ink) !important;
+      text-decoration: none !important;
+    }
+
+    .fc-day-today { background: rgba(79,110,247,.04) !important; }
+
+    .fc-event {
+      border-radius: 5px !important;
+      border: none !important;
+      font-size: .76em !important;
+      font-weight: 600 !important;
+      padding: 2px 5px !important;
+      cursor: pointer !important;
+    }
+
+    .fc-event-title { color: #fff !important; }
+
+    .fc-daygrid-event-dot { display: none !important; }
+
+    /* EMPTY STATE */
+    .empty-quota {
+      padding: 20px;
+      text-align: center;
+      color: var(--ink-faint);
+      font-size: .85em;
+    }
+
+    .empty-quota span { display: block; font-size: 2em; margin-bottom: 8px; }
+
+    /* INFO TEXT INPUT */
+    #custom-info-text {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: .9em;
+      color: var(--ink);
+      background: rgba(245,246,250,1);
+      outline: none;
+      transition: var(--transition);
+    }
+
+    #custom-info-text:focus {
+      border-color: var(--accent);
+      background: white;
+      box-shadow: 0 0 0 3px rgba(79,110,247,.10);
+    }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--ink-faint); border-radius: 3px; }
+
+    /* NOTIFICATION TOAST */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--ink);
+      color: white;
+      padding: 12px 18px;
+      border-radius: var(--radius-sm);
+      font-size: .85em;
+      font-weight: 500;
+      box-shadow: var(--shadow-md);
+      z-index: 9999;
+      animation: toastIn .3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .panel { width: 100%; min-width: unset; border-right: none; border-bottom: 1px solid var(--border); height: auto; max-height: 50vh; }
+      .workspace { flex-direction: column; }
+      .calendar-area { padding: 12px; }
+      .fc { padding: 10px; }
+    }
+
+    /* SweetAlert custom */
+    .swal2-popup { border-radius: 16px !important; font-family: 'DM Sans', sans-serif !important; }
+    .swal2-title { font-family: 'DM Serif Display', serif !important; font-weight: 400 !important; }
+    .swal2-confirm { border-radius: 8px !important; font-family: 'DM Sans', sans-serif !important; font-weight: 700 !important; }
+    .swal2-cancel { border-radius: 8px !important; font-family: 'DM Sans', sans-serif !important; font-weight: 700 !important; }
+  </style>
 </head>
 <body>
 
-<div id="auth-container">
-    <h1 class="app-main-title">🌴 Mon Planning Congés</h1>
-    
-    <div class="auth-box">
-        <img src="icon.png" alt="Logo" class="auth-logo" onerror="this.src='https://via.placeholder.com/80?text=Icon'">
-        <h2 id="auth-title">Connexion</h2>
-        <input type="email" id="email" placeholder="Email">
-        <input type="password" id="password" placeholder="Mot de passe">
-        <button id="auth-btn" class="btn-action" style="background: var(--success);">Se connecter</button>
-        <span id="toggle-auth" style="color:#3498db; cursor:pointer; font-size:0.8em; text-decoration:underline;">Créer un compte</span>
+<!-- ── AUTH ──────────────────────────────────────────────────── -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-header">
+      <span class="auth-icon">🌴</span>
+      <h1>Mon Planning Congés</h1>
+      <p>Gérez vos jours simplement</p>
     </div>
-
-    <div style="margin-top: 25px; color: rgba(255,255,255,0.7); font-size: 0.8em; text-align: center; max-width: 320px;">
-        <div style="font-weight: bold; margin-bottom: 10px; color: white;">
-    Version <span id="app-version">1.3.0</span>
-</div>
-        
-
+    <div class="auth-body">
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Connexion</div>
+        <div class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">Inscription</div>
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="email" placeholder="vous@exemple.fr" autocomplete="email">
+      </div>
+      <div class="field">
+        <label>Mot de passe</label>
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn-primary" id="auth-btn" onclick="doAuth()">Se connecter</button>
     </div>
+  </div>
 </div>
 
+<!-- ── APP ───────────────────────────────────────────────────── -->
 <div id="main-app">
-    <div class="header">
-        <div class="header-left">
-            <span>👤 <strong id="user-display"></strong></span>
-            <button id="logout-btn" style="background:var(--danger); color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; margin-left:10px;">Déconnexion</button>
-            <button id="help-btn" title="Aide" style="background:none; color:var(--info); border:2px solid var(--info); width:30px; height:30px; border-radius:50%; cursor:pointer; margin-left:10px; font-weight:bold; display:flex; align-items:center; justify-content:center; padding:0;">?</button>
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-brand">
+      <span>🌴</span> Congés
+    </div>
+    <div class="topbar-spacer"></div>
+    <button class="btn-icon" id="help-btn" title="Aide" onclick="showHelp()">?</button>
+    <div class="user-chip">
+      <div class="user-avatar" id="user-avatar-initials"></div>
+      <span id="user-display"></span>
+    </div>
+    <button class="btn-icon" title="Déconnexion" onclick="doLogout()" style="border-color: rgba(239,68,68,.3); color: var(--danger);">✕</button>
+  </div>
+
+  <div class="workspace">
+    <!-- PANEL GAUCHE -->
+    <div class="panel">
+
+      <!-- COMPTEURS -->
+      <div class="panel-section">
+        <div class="section-title">Soldes</div>
+        <div class="quota-grid" id="quotas-display">
+          <div class="empty-quota">
+            <span>⚙️</span>
+            Créez vos types de congés dans la configuration
+          </div>
         </div>
-        <a href="planning.html" class="btn-nav">📅 Planning Global</a>
+      </div>
+
+      <!-- FORMULAIRE -->
+      <div class="panel-section">
+        <div class="section-title">Poser des jours</div>
+
+        <!-- Type de congé -->
+        <div class="form-row">
+          <div class="form-label">Type</div>
+          <div class="type-selector" id="type-selector">
+            <!-- Rempli dynamiquement + option Info libre -->
+            <div class="type-option" data-value="INFO_LIBRE" onclick="selectType('INFO_LIBRE', this)" style="border-color: var(--border);">
+              <div class="type-option-dot" style="background:#9ca3af;"></div>
+              <span class="type-option-name">💡 Information libre</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Champ texte info libre -->
+        <div class="form-row" id="custom-info-group" style="display:none;">
+          <div class="form-label">Titre</div>
+          <input type="text" id="custom-info-text" placeholder="Ex : Formation, Présentiel…">
+        </div>
+
+        <!-- Durée -->
+        <div class="form-row">
+          <div class="form-label">Durée</div>
+          <div class="duration-row">
+            <div class="dur-pill selected" data-dur="full" onclick="selectDuration('full', this)">🗓 Journée</div>
+            <div class="dur-pill" data-dur="am" onclick="selectDuration('am', this)">🌅 Matin</div>
+            <div class="dur-pill" data-dur="pm" onclick="selectDuration('pm', this)">🌆 Apr-midi</div>
+          </div>
+        </div>
+
+        <!-- Dates -->
+        <div class="form-row">
+          <div class="form-label" id="dates-label">Période</div>
+          <div class="date-row" id="date-row">
+            <div>
+              <div style="font-size:.72em; color:var(--ink-soft); margin-bottom:3px;">Du</div>
+              <input type="date" class="form-input" id="start-date">
+            </div>
+            <div id="end-date-col">
+              <div style="font-size:.72em; color:var(--ink-soft); margin-bottom:3px;">Au</div>
+              <input type="date" class="form-input" id="end-date">
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-submit" id="add-leave-btn" onclick="addLeave()">
+          <span>+</span> Enregistrer
+        </button>
+      </div>
+
+      <!-- CONFIG (collapsible) -->
+      <div class="config-toggle" id="config-toggle" onclick="toggleConfig()">
+        <div class="config-toggle-label">
+          ⚙️ Configuration
+        </div>
+        <span class="chevron" id="config-chevron">▼</span>
+      </div>
+
+      <div class="config-body" id="config-body">
+        <div class="section-title" style="margin-bottom:10px;">Types de congés</div>
+        <div id="types-list-admin"></div>
+
+        <div class="config-new-type">
+          <input type="text" id="new-type-name" placeholder="Nom (ex: RTT)" class="config-new-type-full">
+          <input type="number" id="new-type-quota" placeholder="Jours" style="width:100%;">
+          <input type="color" id="new-type-color" value="#4f6ef7" class="config-color">
+          <button class="btn-add-type" onclick="saveType()">+ Ajouter</button>
+        </div>
+
+        <button class="btn-danger" onclick="resetYear()">🗑 Réinitialiser l'année</button>
+      </div>
+
     </div>
 
-    <div class="app-container">
-        <div id="sidebar">
-            <h3>📊 Compteurs de Jours</h3>
-            <div id="quotas-display"></div>
-            
-            <hr>
-            <h3>📅 Poser un congé</h3>
-            <label>Du :</label> <input type="date" id="start-date">
-            <label id="end-date-label">Au :</label> <input type="date" id="end-date">
-            
-            <label>Type :</label>
-            <select id="leave-type-select">
-                <option value="">-- Choisir --</option>
-                <option value="INFO_LIBRE">💡 Information libre</option>
-            </select>
-
-            <div class="duration-group">
-                <label style="font-weight:bold; font-size:0.9em;">Durée :</label>
-                <div class="duration-options">
-                    <label class="radio-label">
-                        <input type="radio" name="duration" value="full" checked> Journée
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="duration" value="am"> Matin
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="duration" value="pm"> Après-midi
-                    </label>
-                </div>
-            </div>
-
-            <div id="custom-info-group" style="display:none;">
-                <input type="text" id="custom-info-text" placeholder="Titre (ex: Formation)">
-            </div>
-            
-            <button class="btn-action" id="add-leave-btn">Enregistrer les jours</button>
-
-            <h3 style="margin-top:20px;">⚙️ Configuration <span class="btn-toggle" id="toggle-settings-btn">Afficher</span></h3>
-            <div id="settings-content" style="display:none;">
-                <div id="types-list-admin"></div>
-                <h4 style="margin: 15px 0 5px 0;">Ajouter un type :</h4>
-                <input type="text" id="new-type-name" placeholder="Nom (ex: RTT)">
-                <input type="number" id="new-type-quota" placeholder="Nombre de jours">
-                <input type="color" id="new-type-color" value="#3498db" style="height:40px; cursor:pointer;">
-                <button class="btn-action" id="save-type-btn" style="background:var(--success);">+ Créer ce type</button>
-
-                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
-                <button id="reset-year-btn" class="btn-action" style="background: var(--danger);">🚨 Réinitialiser l'année</button>
-                <p style="font-size: 0.7em; color: #666; margin-top: -5px;">(Supprime tous les congés et remet les compteurs à zéro)</p>
-            </div>
-        </div>
-
-        <div id="calendar-container">
-            <div id="calendar"></div>
-        </div>
+    <!-- CALENDRIER -->
+    <div class="calendar-area">
+      <div id="calendar"></div>
     </div>
+  </div>
 </div>
 
+<!-- ── SCRIPTS ───────────────────────────────────────────────── -->
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    
-    const firebaseConfig = {
-        apiKey: "AIzaSyB0uDfGAHq99p1VqRNj9pap-E7J52JlQ3w",
-        authDomain: "monplanningconges.firebaseapp.com",
-        projectId: "monplanningconges",
-        storageBucket: "monplanningconges.firebasestorage.app",
-        messagingSenderId: "633023003902",
-        appId: "1:633023003902:web:de61338ee094cf3b7639af"
-    };
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    let calendar;
-    let userData = { leaves: [], config: {} };
+  const firebaseConfig = {
+    apiKey: "AIzaSyB0uDfGAHq99p1VqRNj9pap-E7J52JlQ3w",
+    authDomain: "monplanningconges.firebaseapp.com",
+    projectId: "monplanningconges",
+    storageBucket: "monplanningconges.firebasestorage.app",
+    messagingSenderId: "633023003902",
+    appId: "1:633023003902:web:de61338ee094cf3b7639af"
+  };
 
-    // --- FONCTION JOURS FERIES ---
-    function getHolidays(y) {
-        const a=y%19, b=Math.floor(y/100), c=y%100, d=Math.floor(b/4), e=b%4, f=Math.floor((b+8)/25), g=Math.floor((b-f+1)/3), h=(19*a+b-d-g+15)%30, i=Math.floor(c/4), k=c%4, l=(32+2*e+2*i-h-k)%7, m=Math.floor((a+11*h+22*l)/451), n=Math.floor((h+l-7*m+114)/31), p=(h+l-7*m+114)%31;
-        const paques = new Date(y, n-1, p+1);
-        const add = (d, n) => { let r=new Date(d); r.setDate(r.getDate()+n); return r.toISOString().split('T')[0]; };
-        return { [`${y}-01-01`]:"An", [add(paques,0)]:"Pâques", [add(paques,1)]:"L.Pâques", [`${y}-05-01`]:"Travail", [`${y}-05-08`]:"Victoire", [add(paques,39)]:"Ascension", [add(paques,50)]:"L.Pentec.", [`${y}-07-14`]:"Nat.", [`${y}-08-15`]:"Assompt.", [`${y}-11-01`]:"Toussaint", [`${y}-11-11`]:"Armistice", [`${y}-12-25`]:"Noël" };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  let calendar;
+  let userData = { leaves: [], config: {} };
+
+  /* ── STATE UI ── */
+  let selectedType = null;
+  let selectedDuration = 'full';
+
+  /* Expose to global for inline handlers */
+  window.doAuth = async () => {
+    const e = document.getElementById('email').value;
+    const p = document.getElementById('password').value;
+    const isLogin = document.getElementById('tab-login').classList.contains('active');
+    try {
+      if (isLogin) await signInWithEmailAndPassword(auth, e, p);
+      else await createUserWithEmailAndPassword(auth, e, p);
+    } catch(err) {
+      Swal.fire({ icon:'error', title:'Erreur', text: err.message, confirmButtonColor:'var(--accent)', customClass:{popup:'swal2-popup', title:'swal2-title'} });
     }
+  };
 
-    // --- GESTION AUTHENTIFICATION ---
-    document.getElementById('toggle-auth').onclick = () => {
-        const t = document.getElementById('auth-title'), b = document.getElementById('auth-btn'), l = document.getElementById('toggle-auth');
-        if(b.innerText === "Se connecter") { t.innerText="Inscription"; b.innerText="Créer mon compte"; l.innerText="Connexion"; }
-        else { t.innerText="Connexion"; b.innerText="Se connecter"; l.innerText="Créer un compte"; }
-    };
+  window.switchAuthTab = (mode) => {
+    document.getElementById('tab-login').classList.toggle('active', mode==='login');
+    document.getElementById('tab-signup').classList.toggle('active', mode==='signup');
+    document.getElementById('auth-btn').textContent = mode==='login' ? 'Se connecter' : 'Créer mon compte';
+  };
 
-    document.getElementById('auth-btn').onclick = async () => {
-        const e = document.getElementById('email').value, p = document.getElementById('password').value;
-        try {
-            if(document.getElementById('auth-btn').innerText === "Se connecter") await signInWithEmailAndPassword(auth, e, p);
-            else await createUserWithEmailAndPassword(auth, e, p);
-        } catch(err) {
-            Swal.fire({ icon: 'error', title: 'Oups...', text: 'Erreur : ' + err.message, confirmButtonColor: '#2c3e50' });
-        }
-    };
+  window.doLogout = async () => {
+    await signOut(auth);
+    window.location.reload();
+  };
 
-    onAuthStateChanged(auth, (user) => {
-        const authContainer = document.getElementById('auth-container');
-        const mainApp = document.getElementById('main-app');
+  window.toggleConfig = () => {
+    const body = document.getElementById('config-body');
+    const chevron = document.getElementById('config-chevron');
+    const open = body.classList.toggle('open');
+    chevron.classList.toggle('open', open);
+  };
 
-        if(user) {
-            authContainer.style.display = 'none';
-            mainApp.style.display = 'block';
-            document.getElementById('user-display').innerText = user.email;
-            startApp(user.uid);
-        } else {
-            mainApp.style.display = 'none';
-            authContainer.style.display = 'flex';
-        }
+  window.selectType = (value, el) => {
+    document.querySelectorAll('.type-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedType = value;
+    document.getElementById('custom-info-group').style.display = value === 'INFO_LIBRE' ? 'block' : 'none';
+  };
+
+  window.selectDuration = (dur, el) => {
+    document.querySelectorAll('.dur-pill').forEach(p => p.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedDuration = dur;
+    const endCol = document.getElementById('end-date-col');
+    endCol.style.display = dur === 'full' ? '' : 'none';
+    if (dur !== 'full') document.getElementById('end-date').value = '';
+    document.getElementById('date-row').className = dur !== 'full' ? 'date-row single' : 'date-row';
+  };
+
+  window.saveType = async () => {
+    const n = document.getElementById('new-type-name').value.trim();
+    const q = document.getElementById('new-type-quota').value;
+    const c = document.getElementById('new-type-color').value;
+    if (!n || !q) return showToast('⚠️ Remplissez le nom et les jours', 'warn');
+    userData.config[n] = { quota: parseInt(q), color: c };
+    await setDoc(doc(db, "users", auth.currentUser.uid), userData);
+    document.getElementById('new-type-name').value = '';
+    document.getElementById('new-type-quota').value = '';
+    showToast('✅ Type ajouté');
+  };
+
+  window.resetYear = async () => {
+    const res = await Swal.fire({
+      title: 'Réinitialiser l\'année ?',
+      text: 'Tous les congés posés seront supprimés.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: 'var(--danger)',
+      cancelButtonColor: 'var(--ink-soft)',
+      confirmButtonText: 'Tout supprimer',
+      cancelButtonText: 'Annuler'
     });
+    if (res.isConfirmed) {
+      userData.leaves = [];
+      await setDoc(doc(db, "users", auth.currentUser.uid), userData);
+      showToast('🗑 Calendrier réinitialisé');
+    }
+  };
 
-    // --- LOGIQUE APPLICATION ---
-    function startApp(uid) {
-        if(!calendar) {
-            calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-                initialView:'dayGridMonth', locale:'fr', firstDay:1,
-                buttonText: { today: "Jour", month: "Mois", year: "Année" },
-                headerToolbar: { left:'prev,next today', center:'title', right:'dayGridMonth,dayGridYear' },
-                datesSet: (info) => {
-                    const h = getHolidays(info.view.currentStart.getFullYear());
-                    const src = calendar.getEventSourceById('feries'); if(src) src.remove();
-                    calendar.addEventSource({ id:'feries', events: Object.keys(h).map(d=>({title:h[d], start:d, display:'background', backgroundColor:'#eeeeee'}))});
-                },
-                eventClick: async (info) => {
-                    if(info.event.display === 'background') return;
-
-                    Swal.fire({
-                        title: 'Supprimer ce jour ?',
-                        text: `Voulez-vous retirer "${info.event.title}" du calendrier ?`,
-                        icon: 'question',
-                        showCancelButton: true,
-                        confirmButtonColor: '#e74c3c',
-                        cancelButtonColor: '#95a5a6',
-                        confirmButtonText: 'Oui, supprimer',
-                        cancelButtonText: 'Annuler'
-                    }).then(async (result) => {
-                        if (result.isConfirmed) {
-                            // Comparaison stricte sur start et title
-                            userData.leaves = userData.leaves.filter(l => !(l.start === info.event.startStr && l.title === info.event.title));
-                            await setDoc(doc(db, "users", auth.currentUser.uid), userData);
-                            Swal.fire({ title: 'Supprimé !', icon: 'success', timer: 1000, showConfirmButton: false });
-                        }
-                    });
-                }
-            });
-            calendar.render();
-        }
-
-        onSnapshot(doc(db, "users", uid), (snap) => {
-            if(snap.exists()) {
-                userData = snap.data();
-                refreshAll();
-            } else {
-                setDoc(doc(db, "users", uid), userData);
-            }
-        });
+  window.addLeave = async () => {
+    const start = document.getElementById('start-date').value;
+    const end = document.getElementById('end-date').value;
+    if (!start || !selectedType) {
+      return Swal.fire({ icon:'warning', title:'Champs manquants', text:'Choisissez un type et une date.', confirmButtonColor:'var(--accent)' });
     }
 
-    function refreshAll() {
-        const d = document.getElementById('quotas-display'), s = document.getElementById('leave-type-select'), a = document.getElementById('types-list-admin');
-        d.innerHTML = ''; 
-        s.innerHTML = '<option value="">-- Choisir --</option><option value="INFO_LIBRE">💡 Information libre</option>'; 
-        a.innerHTML = '';
-        
-        Object.keys(userData.config).forEach(t => {
-            // CALCUL DES QUOTAS (Modifié pour accepter Matin/Après-midi et l'ancien 0.5j)
-            const used = userData.leaves
-                .filter(l => {
-                    // Vérifie si le titre correspond exactement OU s'il commence par le type (ex: "CP (Matin)")
-                    return (l.title === t || l.title.startsWith(t + " (")) && !l.isCustom;
-                })
-                .reduce((acc, l) => acc + (l.value || 1), 0);
-                
-            const rem = userData.config[t].quota - used;
-            d.innerHTML += `<div class="quota-card" style="border-left-color:${userData.config[t].color}">
-                <strong>${t}</strong> 
-                <b>${Number(rem)} / ${userData.config[t].quota}j</b>
-            </div>`;
-            s.innerHTML += `<option value="${t}">${t}</option>`;
-            
-            const row = document.createElement('div');
-            row.className = 'type-item-row';
-            row.innerHTML = `<span>${t} (${userData.config[t].quota}j)</span>`;
-            const delBtn = document.createElement('button');
-            delBtn.innerText = '🗑️';
-            delBtn.style = 'background:none; border:none; cursor:pointer; color:red; font-size:1.2em;';
-            delBtn.onclick = () => {
-                Swal.fire({
-                    title: 'Êtes-vous sûr ?',
-                    text: `Supprimer le type "${t}" et TOUS les congés associés ?`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#e74c3c',
-                    cancelButtonColor: '#95a5a6',
-                    confirmButtonText: 'Oui, supprimer',
-                    cancelButtonText: 'Annuler'
-                }).then(async (result) => {
-                    if (result.isConfirmed) {
-                        userData.leaves = userData.leaves.filter(l => !l.title.startsWith(t));
-                        delete userData.config[t];
-                        await setDoc(doc(db, "users", auth.currentUser.uid), userData);
-                        Swal.fire('Supprimé !', 'Le type a été retiré.', 'success');
-                    }
-                });
-            };
-            row.appendChild(delBtn);
-            a.appendChild(row);
-        });
+    const isCustom = (selectedType === 'INFO_LIBRE');
+    const baseTitle = isCustom ? (document.getElementById('custom-info-text').value || 'Info') : selectedType;
+    const color = isCustom ? '#9ca3af' : userData.config[selectedType]?.color;
 
-        calendar.removeAllEvents();
-        calendar.addEventSource(userData.leaves);
+    if (selectedDuration !== 'full') {
+      const suffix = selectedDuration === 'am' ? ' (Matin)' : ' (Apr-Midi)';
+      userData.leaves.push({ title: baseTitle + suffix, start, backgroundColor: color, borderColor: 'transparent', isCustom, value: 0.5 });
+    } else {
+      let cur = new Date(start + 'T00:00:00');
+      let last = new Date((end || start) + 'T00:00:00');
+      while (cur <= last) {
+        if (cur.getDay() !== 0 && cur.getDay() !== 6) {
+          userData.leaves.push({ title: baseTitle, start: cur.toISOString().split('T')[0], backgroundColor: color, borderColor: 'transparent', isCustom, value: 1 });
+        }
+        cur.setDate(cur.getDate() + 1);
+      }
     }
 
-    // --- INTERACTIONS ---
-    document.getElementById('leave-type-select').onchange = (e) => {
-        document.getElementById('custom-info-group').style.display = (e.target.value === 'INFO_LIBRE') ? 'block' : 'none';
-    };
+    await setDoc(doc(db, "users", auth.currentUser.uid), userData);
+    document.getElementById('start-date').value = '';
+    document.getElementById('end-date').value = '';
+    document.getElementById('custom-info-text').value = '';
+    showToast('✅ Congé enregistré');
+  };
 
-    document.getElementById('toggle-settings-btn').onclick = () => {
-        const s = document.getElementById('settings-content'), b = document.getElementById('toggle-settings-btn');
-        const isHidden = s.style.display === 'none';
-        s.style.display = isHidden ? 'block' : 'none';
-        b.innerText = isHidden ? 'Masquer' : 'Afficher';
-    };
+  window.showHelp = () => {
+    Swal.fire({
+      title: 'Guide rapide',
+      icon: 'info',
+      width: '520px',
+      html: `<div style="text-align:left; font-size:.88em; line-height:1.7; color:#374151;">
+        <p style="margin-bottom:12px;">
+          <strong>1. Configurez vos types</strong><br>
+          Ouvrez ⚙️ Configuration, créez vos types (CP, RTT…) avec leur quota annuel.
+        </p>
+        <p style="margin-bottom:12px;">
+          <strong>2. Posez vos jours</strong><br>
+          Sélectionnez un type, choisissez la durée (journée, matin ou après-midi), puis choisissez votre période et enregistrez. Les week-ends sont ignorés automatiquement.
+        </p>
+        <p>
+          <strong>3. Supprimer un jour</strong><br>
+          Cliquez sur un événement du calendrier pour le supprimer.
+        </p>
+      </div>`,
+      confirmButtonText: 'Compris !',
+      confirmButtonColor: 'var(--accent)'
+    });
+  };
 
-    document.getElementById('save-type-btn').onclick = async () => {
-        const n = document.getElementById('new-type-name').value.trim(), q = document.getElementById('new-type-quota').value, c = document.getElementById('new-type-color').value;
-        if(n && q) {
-            userData.config[n] = { quota: parseInt(q), color: c };
-            await setDoc(doc(db, "users", auth.currentUser.uid), userData);
-            document.getElementById('new-type-name').value = '';
-            document.getElementById('new-type-quota').value = '';
-        }
-    };
+  /* ── JOURS FÉRIÉS ── */
+  function getHolidays(y) {
+    const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),n=Math.floor((h+l-7*m+114)/31),p=(h+l-7*m+114)%31;
+    const paques=new Date(y,n-1,p+1);
+    const add=(d,n)=>{let r=new Date(d);r.setDate(r.getDate()+n);return r.toISOString().split('T')[0];};
+    return {[`${y}-01-01`]:"Jour de l'An",[add(paques,1)]:"Lundi de Pâques",[`${y}-05-01`]:"Fête du Travail",[`${y}-05-08`]:"Victoire 1945",[add(paques,39)]:"Ascension",[add(paques,50)]:"Pentecôte",[`${y}-07-14`]:"Fête Nationale",[`${y}-08-15`]:"Assomption",[`${y}-11-01`]:"Toussaint",[`${y}-11-11`]:"Armistice",[`${y}-12-25`]:"Noël"};
+  }
 
-    document.getElementById('reset-year-btn').onclick = async () => {
-        const result = await Swal.fire({
-            title: 'Action irréversible !',
-            text: "Voulez-vous vraiment supprimer TOUS vos congés posés et réinitialiser vos compteurs ?",
-            icon: 'warning',
+  /* ── TOAST ── */
+  function showToast(msg, type='ok') {
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    if (type === 'warn') t.style.background = 'var(--warn)';
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2800);
+  }
+
+  /* ── AUTH STATE ── */
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      document.getElementById('auth-screen').style.display = 'none';
+      const mainApp = document.getElementById('main-app');
+      mainApp.style.display = 'flex';
+      mainApp.style.flexDirection = 'column';
+      const shortEmail = user.email.split('@')[0];
+      document.getElementById('user-display').textContent = shortEmail;
+      document.getElementById('user-avatar-initials').textContent = shortEmail[0].toUpperCase();
+      initApp(user.uid);
+    } else {
+      document.getElementById('auth-screen').style.display = 'flex';
+      document.getElementById('main-app').style.display = 'none';
+    }
+  });
+
+  /* ── APP INIT ── */
+  function initApp(uid) {
+    if (!calendar) {
+      calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+        initialView: 'dayGridMonth',
+        locale: 'fr',
+        firstDay: 1,
+        buttonText: { today:'Aujourd\'hui', month:'Mois', year:'Année' },
+        headerToolbar: { left:'prev,next today', center:'title', right:'dayGridMonth,dayGridYear' },
+        height: 'auto',
+        datesSet: (info) => {
+          const h = getHolidays(info.view.currentStart.getFullYear());
+          const src = calendar.getEventSourceById('feries');
+          if (src) src.remove();
+          calendar.addEventSource({
+            id: 'feries',
+            events: Object.keys(h).map(d => ({ title: h[d], start: d, display: 'background', backgroundColor: '#f0f0f0' }))
+          });
+        },
+        eventClick: async (info) => {
+          if (info.event.display === 'background') return;
+          const res = await Swal.fire({
+            title: 'Supprimer ce jour ?',
+            html: `<span style="color:var(--ink-soft)">${info.event.title} · ${info.event.startStr}</span>`,
+            icon: 'question',
             showCancelButton: true,
-            confirmButtonColor: '#e74c3c',
-            cancelButtonColor: '#95a5a6',
-            confirmButtonText: 'Oui, tout effacer',
+            confirmButtonColor: 'var(--danger)',
+            cancelButtonColor: 'var(--ink-soft)',
+            confirmButtonText: 'Supprimer',
             cancelButtonText: 'Annuler'
-        });
-
-        if (result.isConfirmed) {
-            try {
-                userData.leaves = [];
-                await setDoc(doc(db, "users", auth.currentUser.uid), userData);
-                Swal.fire('Réinitialisé !', 'Votre calendrier est à nouveau vide pour la nouvelle année.', 'success');
-            } catch (err) {
-                Swal.fire('Erreur', "La réinitialisation a échoué : " + err.message, 'error');
-            }
+          });
+          if (res.isConfirmed) {
+            userData.leaves = userData.leaves.filter(l => !(l.start === info.event.startStr && l.title === info.event.title));
+            await setDoc(doc(db, "users", auth.currentUser.uid), userData);
+            showToast('🗑 Jour supprimé');
+          }
         }
-    };
+      });
+      calendar.render();
+    }
 
-    // GESTION DE L'AFFICHAGE DATE FIN VIA BOUTONS RADIO
-    document.querySelectorAll('input[name="duration"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            const endDateInput = document.getElementById('end-date');
-            const endDateLabel = document.getElementById('end-date-label');
-            
-            if (e.target.value === 'full') {
-                endDateInput.style.display = 'block';
-                if(endDateLabel) endDateLabel.style.display = 'block';
-            } else {
-                endDateInput.style.display = 'none';
-                if(endDateLabel) endDateLabel.style.display = 'none';
-                endDateInput.value = ""; 
-            }
-        });
+    onSnapshot(doc(db, "users", uid), (snap) => {
+      if (snap.exists()) {
+        userData = snap.data();
+        refreshUI();
+      } else {
+        setDoc(doc(db, "users", uid), userData);
+      }
+    });
+  }
+
+  /* ── REFRESH UI ── */
+  function refreshUI() {
+    const quotasEl = document.getElementById('quotas-display');
+    const typeSel = document.getElementById('type-selector');
+    const adminList = document.getElementById('types-list-admin');
+
+    quotasEl.innerHTML = '';
+    adminList.innerHTML = '';
+
+    /* Rebuild type-selector (garder l'option Info libre en premier) */
+    typeSel.innerHTML = `
+      <div class="type-option${selectedType==='INFO_LIBRE'?' selected':''}" data-value="INFO_LIBRE" onclick="selectType('INFO_LIBRE', this)">
+        <div class="type-option-dot" style="background:#9ca3af;"></div>
+        <span class="type-option-name">💡 Information libre</span>
+      </div>`;
+
+    const configKeys = Object.keys(userData.config || {});
+
+    if (configKeys.length === 0) {
+      quotasEl.innerHTML = `<div class="empty-quota"><span>📋</span>Aucun type configuré</div>`;
+    }
+
+    configKeys.forEach(t => {
+      const cfg = userData.config[t];
+      const used = (userData.leaves || [])
+        .filter(l => (l.title === t || l.title.startsWith(t + ' (')) && !l.isCustom)
+        .reduce((acc, l) => acc + (l.value || 1), 0);
+      const rem = cfg.quota - used;
+      const pct = Math.min(100, (used / cfg.quota) * 100);
+
+      /* Quota card */
+      const card = document.createElement('div');
+      card.className = 'quota-card';
+      card.innerHTML = `
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <div class="quota-dot" style="background:${cfg.color};"></div>
+          <div class="quota-name">${t}</div>
+          <div class="quota-nums">${Number(rem.toFixed(1))} / ${cfg.quota}</div>
+        </div>
+        <div class="quota-sub">${used} jour${used !== 1 ? 's' : ''} posé${used !== 1 ? 's' : ''}</div>
+        <div class="quota-bar-track">
+          <div class="quota-bar-fill" style="width:${pct}%; background:${cfg.color};"></div>
+        </div>`;
+      quotasEl.appendChild(card);
+
+      /* Type selector option */
+      const isSelected = selectedType === t;
+      typeSel.innerHTML += `
+        <div class="type-option${isSelected?' selected':''}" data-value="${t}" onclick="selectType('${t}', this)">
+          <div class="type-option-dot" style="background:${cfg.color};"></div>
+          <span class="type-option-name">${t}</span>
+          <span class="type-option-remain">${Number(rem.toFixed(1))}j</span>
+        </div>`;
+
+      /* Admin row */
+      const row = document.createElement('div');
+      row.className = 'type-list-item';
+      row.innerHTML = `
+        <div class="quota-dot" style="background:${cfg.color};"></div>
+        <span class="type-list-item-name">${t}</span>
+        <span style="color:var(--ink-soft); font-size:.8em;">${cfg.quota}j</span>`;
+      const del = document.createElement('button');
+      del.className = 'btn-del';
+      del.textContent = '✕';
+      del.onclick = () => deleteType(t);
+      row.appendChild(del);
+      adminList.appendChild(row);
     });
 
-    // FONCTION PRINCIPALE : AJOUTER UN CONGÉ
-    document.getElementById('add-leave-btn').onclick = async () => {
-        const start = document.getElementById('start-date').value;
-        const end = document.getElementById('end-date').value;
-        const type = document.getElementById('leave-type-select').value;
-        
-        // Récupérer la valeur du bouton radio coché (full, am, ou pm)
-        const durationMode = document.querySelector('input[name="duration"]:checked').value;
+    /* Refresh calendar */
+    if (calendar) {
+      calendar.removeAllEvents();
+      calendar.addEventSource(userData.leaves || []);
+    }
+  }
 
-        if (!start || !type) {
-            return Swal.fire({ icon: 'warning', title: 'Attention', text: 'Veuillez remplir les dates et le type.', confirmButtonColor: '#2c3e50' });
-        }
+  async function deleteType(t) {
+    const res = await Swal.fire({
+      title: `Supprimer "${t}" ?`,
+      text: 'Tous les congés de ce type seront effacés.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: 'var(--danger)',
+      cancelButtonColor: 'var(--ink-soft)',
+      confirmButtonText: 'Supprimer',
+      cancelButtonText: 'Annuler'
+    });
+    if (res.isConfirmed) {
+      userData.leaves = userData.leaves.filter(l => !l.title.startsWith(t));
+      delete userData.config[t];
+      await setDoc(doc(db, "users", auth.currentUser.uid), userData);
+      if (selectedType === t) selectedType = null;
+      showToast(`🗑 "${t}" supprimé`);
+    }
+  }
 
-        const isC = (type === 'INFO_LIBRE');
-        const baseTitle = isC ? document.getElementById('custom-info-text').value : type;
-
-        if (durationMode !== 'full') {
-            // --- CAS DEMI-JOURNÉE (Matin ou Après-midi) ---
-            const suffix = (durationMode === 'am') ? ' (Matin)' : ' (Apr-Midi)';
-            
-            userData.leaves.push({
-                title: baseTitle + suffix,
-                start: start,
-                backgroundColor: isC ? '#bdc3c7' : userData.config[type].color,
-                borderColor: '#ddd',
-                isCustom: isC,
-                value: 0.5 
-            });
-        } else {
-            // --- CAS JOURS ENTIERS ---
-            let cur = new Date(start);
-            let last = new Date(end || start);
-
-            while (cur <= last) {
-                if (cur.getDay() !== 0 && cur.getDay() !== 6) { // Hors week-end
-                    userData.leaves.push({
-                        title: baseTitle,
-                        start: cur.toISOString().split('T')[0],
-                        backgroundColor: isC ? '#bdc3c7' : userData.config[type].color,
-                        borderColor: '#ddd',
-                        isCustom: isC,
-                        value: 1
-                    });
-                }
-                cur.setDate(cur.getDate() + 1);
-            }
-        }
-
-        // Sauvegarde Firebase
-        await setDoc(doc(db, "users", auth.currentUser.uid), userData);
-
-        // Reset du formulaire
-        document.getElementById('start-date').value = '';
-        document.getElementById('end-date').value = '';
-        document.getElementById('custom-info-text').value = '';
-        // Reset radio à "Journée"
-        const fullRadio = document.querySelector('input[name="duration"][value="full"]');
-        fullRadio.checked = true;
-        // Déclencher l'event change pour réafficher la date de fin
-        fullRadio.dispatchEvent(new Event('change'));
-    };
-
-    document.getElementById('logout-btn').onclick = async () => {
-        try {
-            await signOut(auth);
-            window.location.reload();
-        } catch (err) {
-            alert("Erreur lors de la déconnexion : " + err.message);
-        }
-    };
-
-    document.getElementById('help-btn').onclick = () => {
-        Swal.fire({
-            title: '<strong>📖 Guide de l\'utilisateur</strong>',
-            icon: 'info',
-            width: '600px',
-            html: `
-                <div style="text-align: left; font-size: 0.85em; line-height: 1.6; max-height: 400px; overflow-y: auto;">
-                    <h4 style="color:var(--primary); border-bottom: 1px solid #eee; padding-bottom: 5px;">📊 Gestion des Compteurs</h4>
-                    <p>Commencez par créer vos types de congés dans la section <strong>⚙️ Configuration</strong> (ex: CP, RTT).</p>
-
-                    <h4 style="color:var(--primary); border-bottom: 1px solid #eee; padding-bottom: 5px;">📅 Poser des Jours</h4>
-                    <ul>
-                        <li><strong>Durée :</strong> Sélectionnez "Journée", "Matin" ou "Après-midi".</li>
-                        <li><strong>Matin/Apr-Midi :</strong> Décompte 0.5 jour.</li>
-                        <li><strong>Journée :</strong> Décompte 1 jour (ignore les week-ends automatiquement).</li>
-                    </ul>
-
-                    <h4 style="color:var(--primary); border-bottom: 1px solid #eee; padding-bottom: 5px;">🖱️ Interactions</h4>
-                    <ul>
-                        <li>Cliquez sur un événement dans le calendrier pour le supprimer.</li>
-                    </ul>
-                </div>
-            `,
-            confirmButtonText: 'J\'ai compris',
-            confirmButtonColor: '#2c3e50'
-        });
-    };
+  /* Enter key on auth */
+  ['email','password'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') window.doAuth();
+    });
+  });
 </script>
 </body>
 </html>
