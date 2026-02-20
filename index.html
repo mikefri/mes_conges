@@ -731,6 +731,13 @@
       .fc { padding: 10px; }
     }
 
+    .fc-event-ferie {
+      cursor: default !important;
+      pointer-events: none;
+      font-style: italic;
+      opacity: .85;
+    }
+
     /* SweetAlert custom */
     .swal2-popup { border-radius: 16px !important; font-family: 'DM Sans', sans-serif !important; }
     .swal2-title { font-family: 'DM Serif Display', serif !important; font-weight: 400 !important; }
@@ -1136,11 +1143,19 @@
           if (src) src.remove();
           calendar.addEventSource({
             id: 'feries',
-            events: Object.keys(h).map(d => ({ title: h[d], start: d, display: 'background', backgroundColor: '#f0f0f0' }))
+            events: Object.keys(h).map(d => ({
+              title: '🇫🇷 ' + h[d],
+              start: d,
+              display: 'block',
+              backgroundColor: '#e5e7eb',
+              borderColor: '#d1d5db',
+              textColor: '#374151',
+              classNames: ['fc-event-ferie']
+            }))
           });
         },
         eventClick: async (info) => {
-          if (info.event.display === 'background') return;
+          if (info.event.classNames.includes('fc-event-ferie')) return;
           const res = await Swal.fire({
             title: 'Supprimer ce jour ?',
             html: `<span style="color:var(--ink-soft)">${info.event.title} · ${info.event.startStr}</span>`,
