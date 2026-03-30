@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f1117">
+  <title>Équipe · Planning Congés</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:       #0f1117;
+      --ink-soft:  #6b7280;
+      --ink-faint: #c4c9d4;
+      --surface:   #ffffff;
+      --bg:        #f5f6fa;
+      --border:    #e5e7eb;
+      --accent:    #4f6ef7;
+      --accent-h:  #3a57e8;
+      --danger:    #ef4444;
+      --success:   #22c55e;
+      --warn:      #f59e0b;
+      --radius:    14px;
+      --radius-sm: 8px;
+      --shadow:    0 2px 8px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md: 0 8px 24px rgba(0,0,0,.10), 0 2px 6px rgba(0,0,0,.06);
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      background: var(--bg);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── LOADING ── */
+    #loading-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── LAYOUT ── */
+    #main-app {
+      display: none;
+      height: 100vh;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      height: 55px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 14px;
+      flex-shrink: 0;
+      z-index: 50;
+    }
+
+    .topbar-brand {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.1em;
+      font-weight: 400;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topbar-spacer { flex: 1; }
+
+    .year-nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 8px;
+    }
+
+    .year-btn {
+      background: none; border: none;
+      cursor: pointer; font-size: 1em;
+      color: var(--ink-soft); padding: 3px 7px;
+      border-radius: 50%; transition: .15s ease;
+    }
+    .year-btn:hover { background: rgba(0,0,0,.05); color: var(--ink); }
+
+    .year-display {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1em; font-weight: 400;
+      color: var(--ink); min-width: 55px; text-align: center;
+    }
+
+    .month-nav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+    }
+
+    .month-pill {
+      padding: 5px 11px;
+      border-radius: 999px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      font-size: .75em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .15s ease;
+      color: var(--ink-soft);
+      white-space: nowrap;
+      user-select: none;
+    }
+    .month-pill:hover { border-color: var(--accent); color: var(--accent); }
+    .month-pill.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    .month-pill.all-months {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: white;
+    }
+
+    .btn-action {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 13px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: .8em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .15s ease;
+      text-decoration: none;
+    }
+    .btn-action:hover { opacity: .85; transform: translateY(-1px); }
+
+    .btn-primary-sm { background: var(--accent); color: white; }
+    .btn-dark { background: var(--ink); color: white; }
+    .btn-back { background: var(--bg); color: var(--ink); border: 1px solid var(--border); }
+    .btn-back:hover { background: var(--border); transform: none; }
+
+    /* ── BODY ── */
+    .body-area {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── SIDE PANEL (équipe) ── */
+    .side-panel {
+      width: 260px;
+      min-width: 260px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .panel-head {
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-title {
+      font-size: .68em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--ink-faint);
+      margin-bottom: 10px;
+    }
+
+    /* Team code box */
+    .team-code-box {
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .team-code-label {
+      font-size: .72em;
+      color: var(--ink-soft);
+      font-weight: 600;
+    }
+
+    .team-code-value {
+      font-family: monospace;
+      font-size: .95em;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: .05em;
+    }
+
+    .btn-copy {
+      background: none; border: none;
+      cursor: pointer; font-size: 1em;
+      padding: 3px 6px;
+      border-radius: 4px;
+      transition: .15s ease;
+      color: var(--ink-soft);
+    }
+    .btn-copy:hover { color: var(--accent); background: rgba(79,110,247,.08); }
+
+    /* Join team */
+    .join-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .join-input {
+      flex: 1;
+      padding: 8px 10px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: .82em;
+      color: var(--ink);
+      outline: none;
+      transition: .15s ease;
+      background: var(--bg);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .join-input:focus { border-color: var(--accent); background: white; box-shadow: 0 0 0 3px rgba(79,110,247,.10); }
+    .join-input::placeholder { text-transform: none; letter-spacing: 0; }
+
+    .btn-join {
+      padding: 8px 12px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: .8em;
+      font-weight: 700;
+      cursor: pointer;
+      transition: .15s ease;
+      white-space: nowrap;
+    }
+    .btn-join:hover { background: var(--accent-h); }
+
+    /* Members list */
+    .members-list { padding: 12px 16px; flex: 1; }
+
+    .member-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      transition: .15s ease;
+      margin-bottom: 4px;
+      cursor: default;
+    }
+    .member-item:hover { background: var(--bg); }
+    .member-item.me { background: rgba(79,110,247,.06); }
+
+    .member-avatar {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: white;
+      font-size: .8em;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .member-email {
+      flex: 1;
+      font-size: .83em;
+      font-weight: 500;
+      color: var(--ink);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .me-badge {
+      font-size: .65em;
+      padding: 2px 7px;
+      background: var(--accent);
+      color: white;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    .btn-leave {
+      background: none; border: none;
+      cursor: pointer; font-size: .85em;
+      color: var(--ink-faint);
+      padding: 3px 5px; border-radius: 4px;
+      transition: .15s ease;
+    }
+    .btn-leave:hover { color: var(--danger); background: rgba(239,68,68,.08); }
+
+    /* No team state */
+    .no-team {
+      padding: 24px 16px;
+      text-align: center;
+      color: var(--ink-faint);
+    }
+    .no-team span { display: block; font-size: 2.2em; margin-bottom: 10px; }
+    .no-team p { font-size: .82em; line-height: 1.6; }
+
+    /* ── TABLE AREA ── */
+    .table-area {
+      flex: 1;
+      overflow: auto;
+      padding: 16px;
+    }
+
+    /* ── PLANNING TABLE ── */
+    .planning-outer {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      min-width: 900px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    /* HEADER ROW - collaborateur + mois */
+    thead tr th {
+      background: #1e293b;
+      color: white;
+      font-size: .65em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      padding: 10px 6px;
+      text-align: center;
+      border-right: 1px solid rgba(255,255,255,.12);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    thead tr th:first-child {
+      text-align: left;
+      padding-left: 14px;
+      width: 160px;
+      min-width: 160px;
+      border-right: 1px solid rgba(255,255,255,.25);
+      position: sticky;
+      left: 0;
+      z-index: 20;
+      background: #1e293b;
+    }
+
+    thead tr th:last-child { border-right: none; }
+
+    /* BODY ROWS */
+    tbody tr td {
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      vertical-align: middle;
+      padding: 0;
+      height: 36px;
+    }
+
+    tbody tr td:last-child { border-right: none; }
+
+    tbody tr:last-child td { border-bottom: none; }
+
+    tbody tr:hover td { background: rgba(79,110,247,.025); }
+
+    /* Sticky name col */
+    td.col-name {
+      padding: 0 14px;
+      background: var(--surface);
+      position: sticky;
+      left: 0;
+      z-index: 5;
+      border-right: 1px solid var(--border);
+      min-width: 160px;
+      width: 160px;
+    }
+
+    tbody tr:hover td.col-name { background: rgba(79,110,247,.025); }
+
+    .col-name-inner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .col-name-avatar {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: .68em; font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .col-name-text {
+      font-size: .82em;
+      font-weight: 600;
+      color: var(--ink);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Month cells */
+    td.col-month {
+      position: relative;
+      text-align: center;
+      padding: 4px;
+    }
+
+    /* CELL CONTENT */
+    .cell-empty { width: 100%; height: 100%; }
+
+    .cell-events {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 2px 3px;
+      align-items: stretch;
+    }
+
+    .cell-pill {
+      border-radius: 3px;
+      font-size: .58em;
+      font-weight: 700;
+      color: white;
+      padding: 2px 5px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: .03em;
+      cursor: default;
+    }
+
+    .cell-count {
+      font-size: .68em;
+      font-weight: 700;
+      color: var(--ink);
+      background: var(--bg);
+      border-radius: 3px;
+      padding: 2px 5px;
+      display: inline-block;
+    }
+
+    /* Weekend shading */
+    .month-has-weekend {
+      background: rgba(0,0,0,.018);
+    }
+
+    /* Férié indicator */
+    .ferie-dot {
+      position: absolute;
+      top: 3px;
+      right: 4px;
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--warn);
+      opacity: .6;
+    }
+
+    /* Sub-header: month columns when "all months" view */
+    .subhead-month {
+      font-size: .68em;
+      font-weight: 700;
+      color: var(--ink-soft);
+      padding: 6px 4px;
+      text-align: center;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* DAYS sub-row */
+    .day-subrow td {
+      height: auto;
+      padding: 4px 6px;
+      font-size: .66em;
+      font-weight: 600;
+      color: var(--ink-faint);
+      background: var(--bg);
+      border-bottom: 2px solid var(--border);
+    }
+
+    /* Stats bar */
+    .stats-bar {
+      display: flex;
+      gap: 16px;
+      padding: 10px 16px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      overflow-x: auto;
+      align-items: center;
+    }
+
+    .stat-chip {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+      white-space: nowrap;
+    }
+
+    .stat-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+
+    .stat-name { font-size: .75em; font-weight: 500; color: var(--ink-soft); }
+    .stat-val  { font-size: .85em; font-weight: 700; color: var(--ink); }
+
+    /* LEGEND */
+    .legend {
+      display: flex;
+      gap: 10px;
+      padding: 8px 16px;
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .legend-label {
+      font-size: .63em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--ink-faint);
+    }
+
+    .legend-item {
+      display: flex; align-items: center; gap: 5px;
+      font-size: .7em; font-weight: 500;
+    }
+
+    .legend-dot {
+      width: 10px; height: 10px; border-radius: 3px;
+    }
+
+    /* NO TEAM PLACEHOLDER */
+    .placeholder-area {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+      color: var(--ink-faint);
+    }
+    .placeholder-area span { font-size: 3em; }
+    .placeholder-area h2 { font-family: 'DM Serif Display', serif; font-weight: 400; color: var(--ink-soft); font-size: 1.3em; }
+    .placeholder-area p { font-size: .85em; color: var(--ink-faint); text-align: center; max-width: 320px; line-height: 1.6; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--ink); color: white;
+      padding: 11px 16px; border-radius: var(--radius-sm);
+      font-size: .83em; font-weight: 500;
+      box-shadow: var(--shadow-md); z-index: 9999;
+      animation: toastIn .3s ease;
+    }
+    @keyframes toastIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+    /* SweetAlert */
+    .swal2-popup { border-radius: 16px !important; font-family: 'DM Sans', sans-serif !important; }
+    .swal2-title { font-family: 'DM Serif Display', serif !important; font-weight: 400 !important; }
+    .swal2-confirm, .swal2-cancel { border-radius: 8px !important; font-family: 'DM Sans', sans-serif !important; font-weight: 700 !important; }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--ink-faint); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading-screen">
+  <div class="spinner"></div>
+  <p style="color:var(--ink-soft);font-weight:500;">Chargement de l'équipe…</p>
+</div>
+
+<!-- MAIN APP -->
+<div id="main-app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-brand">
+      <span>👥</span> Vue Équipe
+    </div>
+
+    <!-- Year nav -->
+    <div class="year-nav">
+      <button class="year-btn" onclick="changeYear(-1)">◀</button>
+      <div class="year-display" id="year-display">2026</div>
+      <button class="year-btn" onclick="changeYear(1)">▶</button>
+    </div>
+
+    <!-- Month filter -->
+    <div class="month-nav" id="month-nav">
+      <div class="month-pill all-months active" onclick="selectMonth(-1, this)">Tous</div>
+      <div class="month-pill" onclick="selectMonth(0, this)">Jan</div>
+      <div class="month-pill" onclick="selectMonth(1, this)">Fév</div>
+      <div class="month-pill" onclick="selectMonth(2, this)">Mar</div>
+      <div class="month-pill" onclick="selectMonth(3, this)">Avr</div>
+      <div class="month-pill" onclick="selectMonth(4, this)">Mai</div>
+      <div class="month-pill" onclick="selectMonth(5, this)">Jun</div>
+      <div class="month-pill" onclick="selectMonth(6, this)">Jul</div>
+      <div class="month-pill" onclick="selectMonth(7, this)">Aoû</div>
+      <div class="month-pill" onclick="selectMonth(8, this)">Sep</div>
+      <div class="month-pill" onclick="selectMonth(9, this)">Oct</div>
+      <div class="month-pill" onclick="selectMonth(10, this)">Nov</div>
+      <div class="month-pill" onclick="selectMonth(11, this)">Déc</div>
+    </div>
+
+    <div class="topbar-spacer"></div>
+
+    <a href="index.html" class="btn-action btn-back">← Retour</a>
+  </div>
+
+  <!-- BODY -->
+  <div class="body-area">
+
+    <!-- SIDE PANEL -->
+    <div class="side-panel">
+      <div class="panel-head">
+        <div class="panel-title">Mon équipe</div>
+
+        <!-- Team code -->
+        <div class="team-code-box" id="team-code-box" style="display:none;">
+          <div>
+            <div class="team-code-label">Code d'invitation</div>
+            <div class="team-code-value" id="team-code-value">------</div>
+          </div>
+          <button class="btn-copy" title="Copier" onclick="copyCode()">📋</button>
+        </div>
+
+        <!-- Join team -->
+        <div class="join-row">
+          <input type="text" class="join-input" id="join-input" maxlength="8" placeholder="Code équipe…">
+          <button class="btn-join" onclick="joinOrCreateTeam()">Rejoindre</button>
+        </div>
+      </div>
+
+      <!-- Members list -->
+      <div class="members-list" id="members-list">
+        <div class="no-team" id="no-team-msg">
+          <span>🤝</span>
+          <p>Rejoignez une équipe avec un code, ou créez-en une nouvelle.</p>
+          <button class="btn-action btn-primary-sm" style="margin:12px auto 0; display:flex;" onclick="createNewTeam()">+ Créer une équipe</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLE AREA -->
+    <div id="table-area" class="table-area">
+      <div class="placeholder-area" id="placeholder">
+        <span>👥</span>
+        <h2>Rejoignez une équipe</h2>
+        <p>Créez ou rejoignez une équipe pour visualiser les congés de vos collaborateurs.</p>
+        <button class="btn-action btn-primary-sm" onclick="createNewTeam()">+ Créer mon équipe</button>
+      </div>
+      <div id="planning-container" style="display:none; display:flex; flex-direction:column; gap:12px; min-height:100%;">
+        <div class="planning-outer">
+          <table id="planning-table">
+            <thead id="planning-thead"></thead>
+            <tbody id="planning-tbody"></tbody>
+          </table>
+        </div>
+        <div class="legend" id="planning-legend">
+          <span class="legend-label">Légende :</span>
+          <div id="legend-items" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <div class="legend-item">
+              <div class="legend-dot" style="background:#f59e0b;border-radius:50%;"></div>
+              <span style="color:var(--ink-soft)">Point orange = jour férié dans le mois</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import {
+    getAuth, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import {
+    getFirestore,
+    doc, getDoc, setDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB0uDfGAHq99p1VqRNj9pap-E7J52JlQ3w",
+    authDomain: "monplanningconges.firebaseapp.com",
+    projectId: "monplanningconges",
+    storageBucket: "monplanningconges.firebasestorage.app",
+    messagingSenderId: "633023003902",
+    appId: "1:633023003902:web:de61338ee094cf3b7639af"
+  };
+
+  const app   = initializeApp(firebaseConfig);
+  const auth  = getAuth(app);
+  const db    = getFirestore(app);
+
+  /* ── STATE ── */
+  let currentUser   = null;
+  let currentYear   = new Date().getFullYear();
+  let selectedMonth = -1;  // -1 = tous
+  let teamId        = null;
+  let teamData      = null;
+  let membersData   = {};   // uid → { email, leaves, config }
+  let memberUnsubs  = {};   // uid → unsubscribe fn
+  let teamUnsub     = null;
+
+  /* ── UTILS ── */
+  function fmtDate(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function showToast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast'; t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2800);
+  }
+
+  /* ── COULEURS AVATAR ── */
+  const AVATAR_COLORS = ['#4f6ef7','#7c3aed','#0891b2','#059669','#d97706','#dc2626','#db2777','#0284c7'];
+  function avatarColor(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) h = str.charCodeAt(i) + ((h << 5) - h);
+    return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+  }
+  function initials(email) { return email[0].toUpperCase(); }
+
+  /* ── CODE ÉQUIPE ── */
+  function genCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let c = '';
+    for (let i = 0; i < 6; i++) c += chars[Math.floor(Math.random() * chars.length)];
+    return c;
+  }
+
+  window.copyCode = () => {
+    navigator.clipboard.writeText(document.getElementById('team-code-value').textContent);
+    showToast('📋 Code copié !');
+  };
+
+  /* ── YEAR / MONTH ── */
+  window.changeYear = (d) => {
+    currentYear += d;
+    document.getElementById('year-display').textContent = currentYear;
+    renderTable();
+  };
+
+  window.selectMonth = (m, el) => {
+    document.querySelectorAll('.month-pill').forEach(p => { p.classList.remove('active','all-months'); });
+    el.classList.add('active');
+    if (m === -1) el.classList.add('all-months');
+    selectedMonth = m;
+    renderTable();
+  };
+
+  /* ── JOURS FÉRIÉS ── */
+  function getHolidays(y) {
+    const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m2=Math.floor((a+11*h+22*l)/451),n=Math.floor((h+l-7*m2+114)/31),p=(h+l-7*m2+114)%31;
+    const paques = new Date(y, n-1, p+1);
+    const add = (date, nb) => { const r=new Date(date); r.setDate(r.getDate()+nb); return fmtDate(r); };
+    return {
+      [`${y}-01-01`]:"Jour de l'An",
+      [add(paques,1)]:"Lundi de Pâques",
+      [`${y}-05-01`]:"Fête du Travail",
+      [`${y}-05-08`]:"Victoire 1945",
+      [add(paques,39)]:"Ascension",
+      [add(paques,50)]:"Lundi de Pentecôte",
+      [`${y}-07-14`]:"Fête Nationale",
+      [`${y}-08-15`]:"Assomption",
+      [`${y}-11-01`]:"Toussaint",
+      [`${y}-11-11`]:"Armistice",
+      [`${y}-12-25`]:"Noël"
+    };
+  }
+
+  /* ── RENDER TABLE ── */
+  function renderTable() {
+    if (!teamId || Object.keys(membersData).length === 0) return;
+
+    const holidays  = getHolidays(currentYear);
+    const months    = selectedMonth === -1
+      ? [0,1,2,3,4,5,6,7,8,9,10,11]
+      : [selectedMonth];
+    const monthNames = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    const monthShort = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+
+    /* ── Build header ── */
+    const thead = document.getElementById('planning-thead');
+    thead.innerHTML = '';
+    const tr = document.createElement('tr');
+    const thName = document.createElement('th');
+    thName.textContent = 'Collaborateur';
+    tr.appendChild(thName);
+
+    months.forEach(m => {
+      const th = document.createElement('th');
+      th.textContent = selectedMonth === -1 ? monthShort[m] : monthNames[m];
+      tr.appendChild(th);
+    });
+    thead.appendChild(tr);
+
+    /* ── Build body ── */
+    const tbody = document.getElementById('planning-tbody');
+    tbody.innerHTML = '';
+
+    // Collect all leave types for legend
+    const typeColors = {};
+
+    const memberKeys = Object.keys(membersData);
+    // Sort: current user first, then alphabetical
+    memberKeys.sort((a, b) => {
+      if (a === currentUser.uid) return -1;
+      if (b === currentUser.uid) return 1;
+      return (membersData[a]?.email || '').localeCompare(membersData[b]?.email || '');
+    });
+
+    memberKeys.forEach(uid => {
+      const mdata = membersData[uid];
+      if (!mdata) return;
+      const email   = mdata.email || uid;
+      const leaves  = mdata.leaves || [];
+
+      const row = document.createElement('tr');
+
+      /* Name cell */
+      const tdName = document.createElement('td');
+      tdName.className = 'col-name';
+      tdName.innerHTML = `
+        <div class="col-name-inner">
+          <div class="col-name-avatar" style="background:${avatarColor(email)}">${initials(email)}</div>
+          <span class="col-name-text" title="${email}">${email.split('@')[0]}</span>
+          ${uid === currentUser.uid ? '<span class="me-badge" style="font-size:.6em;padding:1px 5px;background:var(--accent);color:white;border-radius:999px;margin-left:2px;">moi</span>' : ''}
+        </div>`;
+      row.appendChild(tdName);
+
+      /* Month cells */
+      months.forEach(m => {
+        const td = document.createElement('td');
+        td.className = 'col-month';
+
+        // Check if this month has holidays
+        const hasHoliday = Object.keys(holidays).some(hd => {
+          const [hy, hm] = hd.split('-').map(Number);
+          return hy === currentYear && (hm - 1) === m;
+        });
+
+        if (hasHoliday) {
+          const dot = document.createElement('div');
+          dot.className = 'ferie-dot';
+          td.appendChild(dot);
+        }
+
+        // Filter leaves for this month
+        const monthLeaves = leaves.filter(l => {
+          const [ly, lm] = l.start.split('-').map(Number);
+          return ly === currentYear && (lm - 1) === m;
+        });
+
+        if (monthLeaves.length === 0) {
+          td.appendChild(document.createElement('div')).className = 'cell-empty';
+        } else {
+          // Group by type (base title without demi-journée suffix)
+          const byType = {};
+          monthLeaves.forEach(l => {
+            const baseTitle = l.title.replace(/ \(Matin\)| \(Apr-Midi\)/g, '');
+            if (!byType[baseTitle]) byType[baseTitle] = { count: 0, color: l.backgroundColor || '#9ca3af', half: 0 };
+            byType[baseTitle].count += (l.value || 1);
+            // Track for legend
+            typeColors[baseTitle] = l.backgroundColor || '#9ca3af';
+          });
+
+          const wrap = document.createElement('div');
+          wrap.className = 'cell-events';
+
+          Object.entries(byType).forEach(([name, info]) => {
+            const pill = document.createElement('div');
+            pill.className = 'cell-pill';
+            pill.style.background = info.color;
+            const days = info.count;
+            const label = selectedMonth === -1
+              ? `${days}j`
+              : `${name.length > 6 ? name.substring(0,5)+'…' : name} · ${days}j`;
+            pill.textContent = label;
+            pill.title = `${name} : ${days} jour${days !== 1 ? 's' : ''}`;
+            wrap.appendChild(pill);
+          });
+
+          td.appendChild(wrap);
+        }
+
+        row.appendChild(td);
+      });
+
+      tbody.appendChild(row);
+    });
+
+    /* ── Legend ── */
+    const legItems = document.getElementById('legend-items');
+    legItems.innerHTML = `
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#f59e0b;border-radius:50%;"></div>
+        <span style="color:var(--ink-soft)">Point orange = jour férié</span>
+      </div>`;
+
+    Object.entries(typeColors).forEach(([name, color]) => {
+      const item = document.createElement('div');
+      item.className = 'legend-item';
+      item.innerHTML = `<div class="legend-dot" style="background:${color};"></div><span>${name}</span>`;
+      legItems.appendChild(item);
+    });
+
+    /* Show table */
+    document.getElementById('placeholder').style.display     = 'none';
+    document.getElementById('planning-container').style.display = 'flex';
+  }
+
+  /* ── TEAM MANAGEMENT ── */
+  window.createNewTeam = async () => {
+    const code = genCode();
+    const newTeamId = 'team_' + code;
+    await setDoc(doc(db, 'teams', newTeamId), {
+      code,
+      members: [currentUser.uid],
+      emails: [currentUser.email],
+      createdBy: currentUser.uid,
+      createdAt: Date.now()
+    });
+    // Save teamId in user doc
+    await updateDoc(doc(db, 'users', currentUser.uid), { teamId: newTeamId });
+    showToast('✅ Équipe créée !');
+  };
+
+  window.joinOrCreateTeam = async () => {
+    const code = document.getElementById('join-input').value.trim().toUpperCase();
+    if (code.length < 4) return showToast('⚠️ Code invalide');
+
+    // Search team by code
+    // We store teamId as 'team_CODE'
+    const tid = 'team_' + code;
+    const snap = await getDoc(doc(db, 'teams', tid));
+    if (!snap.exists()) {
+      return Swal.fire({ icon:'error', title:'Équipe introuvable', text: `Aucune équipe avec le code "${code}".`, confirmButtonColor:'var(--accent)' });
+    }
+
+    const tdata = snap.data();
+    if (tdata.members.includes(currentUser.uid)) {
+      return showToast('ℹ️ Vous êtes déjà dans cette équipe');
+    }
+
+    // Leave current team if any
+    if (teamId) await leaveCurrentTeam(false);
+
+    // Join new team
+    await updateDoc(doc(db, 'teams', tid), {
+      members: arrayUnion(currentUser.uid),
+      emails: arrayUnion(currentUser.email)
+    });
+    await updateDoc(doc(db, 'users', currentUser.uid), { teamId: tid });
+    document.getElementById('join-input').value = '';
+    showToast('✅ Équipe rejointe !');
+  };
+
+  async function leaveCurrentTeam(confirm = true) {
+    if (!teamId) return;
+    if (confirm) {
+      const res = await Swal.fire({
+        title: 'Quitter l\'équipe ?',
+        text: 'Vous ne verrez plus les congés de cette équipe.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: 'var(--danger)',
+        cancelButtonColor: 'var(--ink-soft)',
+        confirmButtonText: 'Quitter',
+        cancelButtonText: 'Annuler'
+      });
+      if (!res.isConfirmed) return;
+    }
+
+    await updateDoc(doc(db, 'teams', teamId), {
+      members: arrayRemove(currentUser.uid),
+      emails: arrayRemove(currentUser.email)
+    });
+    await updateDoc(doc(db, 'users', currentUser.uid), { teamId: null });
+    // Clean up
+    Object.values(memberUnsubs).forEach(u => u());
+    memberUnsubs = {};
+    membersData  = {};
+    teamId = null; teamData = null;
+    renderSidePanel();
+    document.getElementById('placeholder').style.display     = 'flex';
+    document.getElementById('planning-container').style.display = 'none';
+    document.getElementById('team-code-box').style.display   = 'none';
+    if (confirm) showToast('👋 Équipe quittée');
+  }
+
+  /* ── SUBSCRIBE TO TEAM ── */
+  function subscribeToTeam(tid) {
+    if (teamUnsub) teamUnsub();
+    teamUnsub = onSnapshot(doc(db, 'teams', tid), async (snap) => {
+      if (!snap.exists()) return;
+      teamId   = tid;
+      teamData = snap.data();
+
+      // Show team code
+      document.getElementById('team-code-box').style.display = 'flex';
+      document.getElementById('team-code-value').textContent = teamData.code;
+
+      // Subscribe to each member's data
+      const newMembers = teamData.members || [];
+
+      // Unsubscribe removed members
+      Object.keys(memberUnsubs).forEach(uid => {
+        if (!newMembers.includes(uid)) {
+          memberUnsubs[uid]();
+          delete memberUnsubs[uid];
+          delete membersData[uid];
+        }
+      });
+
+      // Subscribe new members
+      newMembers.forEach(uid => {
+        if (!memberUnsubs[uid]) {
+          memberUnsubs[uid] = onSnapshot(doc(db, 'users', uid), (usnap) => {
+            if (usnap.exists()) {
+              membersData[uid] = { ...usnap.data(), email: teamData.emails[newMembers.indexOf(uid)] || uid };
+            } else {
+              membersData[uid] = { leaves: [], config: {}, email: teamData.emails[newMembers.indexOf(uid)] || uid };
+            }
+            // Also map email from teamData.emails
+            const idx = newMembers.indexOf(uid);
+            if (idx !== -1 && teamData.emails?.[idx]) {
+              membersData[uid].email = teamData.emails[idx];
+            }
+            renderSidePanel();
+            renderTable();
+          });
+        }
+      });
+    });
+  }
+
+  /* ── RENDER SIDE PANEL ── */
+  function renderSidePanel() {
+    const list = document.getElementById('members-list');
+    const noTeamMsg = document.getElementById('no-team-msg');
+
+    if (!teamId || !teamData) {
+      noTeamMsg.style.display = 'block';
+      return;
+    }
+
+    noTeamMsg.style.display = 'none';
+    list.innerHTML = '';
+
+    const members = teamData.members || [];
+    const emails  = teamData.emails  || [];
+
+    // Sort: me first
+    const sorted = members.map((uid, i) => ({ uid, email: emails[i] || uid }))
+      .sort((a, b) => a.uid === currentUser.uid ? -1 : b.uid === currentUser.uid ? 1 : a.email.localeCompare(b.email));
+
+    sorted.forEach(({ uid, email }) => {
+      const isMe = uid === currentUser.uid;
+      const item = document.createElement('div');
+      item.className = 'member-item' + (isMe ? ' me' : '');
+      item.innerHTML = `
+        <div class="member-avatar" style="background:${avatarColor(email)}">${initials(email)}</div>
+        <span class="member-email" title="${email}">${email}</span>
+        ${isMe ? '<span class="me-badge">moi</span>' : ''}`;
+
+      if (isMe) {
+        const btn = document.createElement('button');
+        btn.className = 'btn-leave';
+        btn.title = 'Quitter l\'équipe';
+        btn.textContent = '✕';
+        btn.onclick = () => leaveCurrentTeam(true);
+        item.appendChild(btn);
+      }
+
+      list.appendChild(item);
+    });
+  }
+
+  /* ── AUTH ── */
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'index.html'; return; }
+    currentUser = user;
+
+    document.getElementById('loading-screen').style.display = 'none';
+    const mainApp = document.getElementById('main-app');
+    mainApp.style.display = 'flex';
+    mainApp.style.flexDirection = 'column';
+    document.getElementById('year-display').textContent = currentYear;
+
+    // Load user doc to check teamId
+    const usnap = await getDoc(doc(db, 'users', user.uid));
+    if (usnap.exists()) {
+      const udata = usnap.data();
+      if (udata.teamId) {
+        subscribeToTeam(udata.teamId);
+      }
+    }
+  });
+</script>
+</body>
+</html>
