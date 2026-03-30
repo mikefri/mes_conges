@@ -14,499 +14,278 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --ink: #0f1117;
-      --ink-soft: #6b7280;
-      --ink-faint: #c4c9d4;
-      --surface: #ffffff;
-      --bg: #f5f6fa;
-      --border: #e5e7eb;
-      --accent: #7c3aed;
-      --accent-h: #6d28d9;
-      --danger: #ef4444;
-      --success: #22c55e;
-      --warn: #f59e0b;
-      --radius: 14px;
-      --radius-sm: 8px;
-      --shadow: 0 2px 8px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
-      --shadow-md: 0 8px 24px rgba(0,0,0,.10), 0 2px 6px rgba(0,0,0,.06);
-      --transition: .18s ease;
+      --ink:#0f1117;--ink-soft:#6b7280;--ink-faint:#c4c9d4;--surface:#ffffff;--bg:#f5f6fa;
+      --border:#e5e7eb;--accent:#7c3aed;--accent-h:#6d28d9;--danger:#ef4444;--success:#22c55e;
+      --warn:#f59e0b;--radius:14px;--radius-sm:8px;
+      --shadow:0 2px 8px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+      --shadow-md:0 8px 24px rgba(0,0,0,.10),0 2px 6px rgba(0,0,0,.06);
+      --transition:.18s ease;
     }
 
     html, body {
-      height: 100%;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 13px;
-      background: var(--bg);
-      color: var(--ink);
-      -webkit-font-smoothing: antialiased;
-      overflow: hidden;
+      height:100%;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--bg);
+      color:var(--ink);-webkit-font-smoothing:antialiased;overflow:hidden;
     }
 
     #loading-screen {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      flex-direction: column;
-      gap: 16px;
+      display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;
     }
 
     .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);
+      border-radius:50%;animation:spin .8s linear infinite;
     }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes spin { to { transform:rotate(360deg); } }
 
-    #main-app {
-      display: none;
-      height: 100vh;
-      flex-direction: column;
-      overflow: hidden;
-    }
+    #main-app { display:none;height:100vh;flex-direction:column;overflow:hidden; }
 
+    /* TOPBAR */
     .topbar {
-      height: 55px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
-      gap: 12px;
-      flex-shrink: 0;
+      height:55px;background:var(--surface);border-bottom:1px solid var(--border);
+      display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;
     }
 
     .topbar-brand {
-      font-family: 'DM Serif Display', serif;
-      font-size: 1.1em;
-      color: var(--ink);
-      font-weight: 400;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      font-family:'DM Serif Display',serif;font-size:1.1em;color:var(--ink);
+      font-weight:400;display:flex;align-items:center;gap:8px;
     }
 
-    .topbar-brand span { font-size: 1.2em; }
-    .topbar-spacer { flex: 1; }
+    .topbar-brand span { font-size:1.2em; }
+    .topbar-spacer { flex:1; }
 
     .month-nav {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 4px 6px;
+      display:flex;align-items:center;gap:8px;background:var(--bg);
+      border:1px solid var(--border);border-radius:999px;padding:4px 6px;
     }
 
     .month-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 1em;
-      color: var(--ink-soft);
-      padding: 4px 8px;
-      border-radius: 50%;
-      transition: .15s ease;
+      background:none;border:none;cursor:pointer;font-size:1em;color:var(--ink-soft);
+      padding:4px 8px;border-radius:50%;transition:.15s ease;
     }
 
-    .month-btn:hover { background: rgba(0,0,0,.05); color: var(--ink); }
+    .month-btn:hover { background:rgba(0,0,0,.05);color:var(--ink); }
 
     .month-display {
-      font-family: 'DM Serif Display', serif;
-      font-size: 1em;
-      font-weight: 400;
-      color: var(--ink);
-      min-width: 140px;
-      text-align: center;
+      font-family:'DM Serif Display',serif;font-size:1em;font-weight:400;color:var(--ink);
+      min-width:140px;text-align:center;
     }
 
     .btn-today {
-      padding: 6px 12px;
-      background: var(--accent);
-      color: white;
-      border: none;
-      border-radius: var(--radius-sm);
-      font-family: inherit;
-      font-size: .75em;
-      font-weight: 700;
-      cursor: pointer;
-      transition: .15s ease;
+      padding:6px 12px;background:var(--accent);color:white;border:none;border-radius:var(--radius-sm);
+      font-family:inherit;font-size:.75em;font-weight:700;cursor:pointer;transition:.15s ease;
     }
 
-    .btn-today:hover { background: var(--accent-h); }
+    .btn-today:hover { background:var(--accent-h); }
 
     .btn-back {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 7px 12px;
-      background: var(--ink);
-      color: white;
-      border: none;
-      border-radius: var(--radius-sm);
-      font-family: inherit;
-      font-size: .8em;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
-      transition: .15s ease;
+      display:flex;align-items:center;gap:6px;padding:7px 12px;background:var(--ink);color:white;
+      border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:.8em;font-weight:600;
+      cursor:pointer;text-decoration:none;transition:.15s ease;
     }
 
-    .btn-back:hover { opacity: .85; transform: translateY(-1px); }
+    .btn-back:hover { opacity:.85;transform:translateY(-1px); }
 
     .btn-export {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 7px 12px;
-      background: var(--success);
-      color: white;
-      border: none;
-      border-radius: var(--radius-sm);
-      font-family: inherit;
-      font-size: .8em;
-      font-weight: 600;
-      cursor: pointer;
-      transition: .15s ease;
+      display:flex;align-items:center;gap:6px;padding:7px 12px;background:var(--success);color:white;
+      border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:.8em;font-weight:600;
+      cursor:pointer;transition:.15s ease;
     }
 
-    .btn-export:hover { opacity: .85; }
+    .btn-export:hover { opacity:.85; }
 
+    /* TEAM FILTER */
+    .team-filter {
+      display:flex;align-items:center;gap:8px;
+    }
+
+    .team-filter-label {
+      font-size:.78em;font-weight:600;color:var(--ink-soft);white-space:nowrap;
+    }
+
+    .team-select {
+      padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);
+      font-family:inherit;font-size:.82em;font-weight:600;color:var(--ink);background:white;
+      cursor:pointer;outline:none;transition:var(--transition);min-width:140px;
+    }
+
+    .team-select:focus { border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,58,237,.12); }
+
+    /* STATS BAR */
     .stats-bar {
-      display: flex;
-      gap: 16px;
-      padding: 10px 20px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-      flex-wrap: wrap;
+      display:flex;gap:16px;padding:10px 20px;background:var(--surface);
+      border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;
     }
 
     .stat-chip {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      font-size: .78em;
-      font-weight: 600;
+      display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg);
+      border:1px solid var(--border);border-radius:999px;font-size:.78em;font-weight:600;
     }
 
     .stat-chip .num {
-      background: var(--accent);
-      color: white;
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: .85em;
-      font-weight: 800;
+      background:var(--accent);color:white;width:22px;height:22px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;font-size:.85em;font-weight:800;
     }
 
-    .stat-chip.warn .num { background: var(--warn); }
-    .stat-chip.danger .num { background: var(--danger); }
+    .stat-chip.warn .num { background:var(--warn); }
+    .stat-chip.danger .num { background:var(--danger); }
 
+    /* PLANNING */
     .planning-container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      padding: 12px;
-      overflow: hidden;
+      flex:1;display:flex;flex-direction:column;padding:12px;overflow:hidden;
     }
 
     .planning-wrapper {
-      background: var(--surface);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
+      background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);
+      overflow:hidden;display:flex;flex-direction:column;height:100%;
     }
 
     .grid-header {
-      display: flex;
-      background: #2c3e50;
-      color: white;
-      font-weight: 700;
-      font-size: .65em;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      flex-shrink: 0;
+      display:flex;background:#2c3e50;color:white;font-weight:700;font-size:.65em;
+      text-transform:uppercase;letter-spacing:.05em;flex-shrink:0;
     }
 
     .grid-header-name {
-      width: 180px;
-      min-width: 180px;
-      padding: 10px 12px;
-      border-right: 2px solid rgba(255,255,255,.2);
-      display: flex;
-      align-items: center;
-      font-weight: 800;
-      letter-spacing: .1em;
+      width:180px;min-width:180px;padding:10px 12px;border-right:2px solid rgba(255,255,255,.2);
+      display:flex;align-items:center;font-weight:800;letter-spacing:.1em;
     }
 
     .grid-header-day {
-      flex: 1;
-      padding: 6px 2px;
-      text-align: center;
-      border-right: 1px solid rgba(255,255,255,.1);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1px;
-      min-width: 0;
+      flex:1;padding:6px 2px;text-align:center;border-right:1px solid rgba(255,255,255,.1);
+      display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0;
     }
 
-    .grid-header-day:last-child { border-right: none; }
+    .grid-header-day:last-child { border-right:none; }
+    .grid-header-day .day-num { font-size:1.2em;font-weight:800; }
+    .grid-header-day .day-name { font-size:.85em;font-weight:500;opacity:.7; }
+    .grid-header-day.weekend { background:rgba(255,255,255,.08); }
+    .grid-header-day.today { background:var(--accent); }
+    .grid-header-day.holiday { background:rgba(239,68,68,.5); }
 
-    .grid-header-day .day-num {
-      font-size: 1.2em;
-      font-weight: 800;
-    }
-
-    .grid-header-day .day-name {
-      font-size: .85em;
-      font-weight: 500;
-      opacity: .7;
-    }
-
-    .grid-header-day.weekend { background: rgba(255,255,255,.08); }
-    .grid-header-day.today { background: var(--accent); }
-    .grid-header-day.holiday { background: rgba(239,68,68,.5); }
-
-    .grid-body {
-      flex: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
-    }
+    .grid-body { flex:1;overflow-y:auto;overflow-x:hidden; }
 
     .grid-row {
-      display: flex;
-      border-bottom: 1px solid var(--border);
-      min-height: 44px;
-      transition: background .1s ease;
+      display:flex;border-bottom:1px solid var(--border);min-height:44px;transition:background .1s ease;
     }
 
-    .grid-row:hover { background: rgba(79,110,247,.02); }
-    .grid-row:last-child { border-bottom: none; }
+    .grid-row:hover { background:rgba(79,110,247,.02); }
+    .grid-row:last-child { border-bottom:none; }
 
     .grid-row-name {
-      width: 180px;
-      min-width: 180px;
-      padding: 8px 12px;
-      border-right: 2px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--bg);
-      font-weight: 500;
-      font-size: .88em;
-      position: sticky;
-      left: 0;
-      z-index: 2;
+      width:180px;min-width:180px;padding:8px 12px;border-right:2px solid var(--border);
+      display:flex;align-items:center;gap:8px;background:var(--bg);font-weight:500;
+      font-size:.88em;position:sticky;left:0;z-index:2;
     }
 
     .avatar {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: .72em;
-      font-weight: 800;
-      flex-shrink: 0;
+      width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      color:white;font-size:.72em;font-weight:800;flex-shrink:0;
     }
 
-    .name-text {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      flex: 1;
-    }
+    .name-text { white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1; }
 
     .days-count {
-      margin-left: auto;
-      font-size: .72em;
-      font-weight: 700;
-      color: var(--ink-faint);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 2px 7px;
-      flex-shrink: 0;
+      margin-left:auto;font-size:.72em;font-weight:700;color:var(--ink-faint);background:var(--surface);
+      border:1px solid var(--border);border-radius:999px;padding:2px 7px;flex-shrink:0;
     }
 
-    .grid-row-days {
-      display: flex;
-      flex: 1;
-      min-width: 0;
-    }
+    .grid-row-days { display:flex;flex:1;min-width:0; }
 
     .grid-cell {
-      flex: 1;
-      border-right: 1px solid var(--border);
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 0;
-      cursor: default;
+      flex:1;border-right:1px solid var(--border);position:relative;display:flex;
+      align-items:center;justify-content:center;min-width:0;cursor:default;
     }
 
-    .grid-cell:last-child { border-right: none; }
-    .grid-cell.weekend { background: rgba(0,0,0,.03); }
-    .grid-cell.today-col { background: rgba(79,110,247,.06); }
+    .grid-cell:last-child { border-right:none; }
+    .grid-cell.weekend { background:rgba(0,0,0,.03); }
+    .grid-cell.today-col { background:rgba(79,110,247,.06); }
 
     .grid-cell.holiday-col {
-      background: repeating-linear-gradient(
-        45deg,
-        transparent,
-        transparent 3px,
-        rgba(239,68,68,.04) 3px,
-        rgba(239,68,68,.04) 6px
-      );
+      background:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(239,68,68,.04) 3px,rgba(239,68,68,.04) 6px);
     }
 
     .cell-event {
-      width: 88%;
-      height: 70%;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: .6em;
-      font-weight: 700;
-      color: white;
-      letter-spacing: .03em;
-      text-transform: uppercase;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      cursor: pointer;
-      transition: .12s ease;
-      box-shadow: 0 1px 3px rgba(0,0,0,.15);
+      width:88%;height:70%;border-radius:4px;display:flex;align-items:center;justify-content:center;
+      font-size:.6em;font-weight:700;color:white;letter-spacing:.03em;text-transform:uppercase;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;transition:.12s ease;
+      box-shadow:0 1px 3px rgba(0,0,0,.15);
     }
 
-    .cell-event:hover {
-      transform: scale(1.1);
-      box-shadow: 0 2px 8px rgba(0,0,0,.25);
-      z-index: 5;
-    }
-
-    .cell-event.half { height: 45%; font-size: .5em; }
-    .cell-event.am { align-self: flex-start; margin-top: 3px; }
-    .cell-event.pm { align-self: flex-end; margin-bottom: 3px; }
+    .cell-event:hover { transform:scale(1.1);box-shadow:0 2px 8px rgba(0,0,0,.25);z-index:5; }
+    .cell-event.half { height:45%;font-size:.5em; }
+    .cell-event.am { align-self:flex-start;margin-top:3px; }
+    .cell-event.pm { align-self:flex-end;margin-bottom:3px; }
 
     .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 60px 20px;
-      color: var(--ink-faint);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:60px 20px;color:var(--ink-faint);
     }
 
-    .empty-state .icon { font-size: 3em; margin-bottom: 12px; }
-    .empty-state .text { font-size: 1.1em; font-weight: 500; }
-    .empty-state .sub { font-size: .85em; margin-top: 6px; color: var(--ink-faint); }
+    .empty-state .icon { font-size:3em;margin-bottom:12px; }
+    .empty-state .text { font-size:1.1em;font-weight:500; }
+    .empty-state .sub { font-size:.85em;margin-top:6px;color:var(--ink-faint); }
 
     .legend {
-      display: flex;
-      gap: 12px;
-      padding: 10px 16px;
-      background: var(--bg);
-      border-top: 1px solid var(--border);
-      flex-wrap: wrap;
-      align-items: center;
-      flex-shrink: 0;
+      display:flex;gap:12px;padding:10px 16px;background:var(--bg);border-top:1px solid var(--border);
+      flex-wrap:wrap;align-items:center;flex-shrink:0;
     }
 
     .legend-label {
-      font-size: .65em;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: var(--ink-faint);
-      margin-right: 4px;
+      font-size:.65em;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+      color:var(--ink-faint);margin-right:4px;
     }
 
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: .7em;
-      font-weight: 500;
-    }
-
-    .legend-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 3px;
-    }
+    .legend-item { display:flex;align-items:center;gap:5px;font-size:.7em;font-weight:500; }
+    .legend-dot { width:12px;height:12px;border-radius:3px; }
 
     .tooltip {
-      position: fixed;
-      background: var(--ink);
-      color: white;
-      padding: 8px 14px;
-      border-radius: var(--radius-sm);
-      font-size: .82em;
-      font-weight: 500;
-      box-shadow: var(--shadow-md);
-      z-index: 9999;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity .15s ease;
-      max-width: 240px;
+      position:fixed;background:var(--ink);color:white;padding:8px 14px;border-radius:var(--radius-sm);
+      font-size:.82em;font-weight:500;box-shadow:var(--shadow-md);z-index:9999;pointer-events:none;
+      opacity:0;transition:opacity .15s ease;max-width:240px;
     }
 
-    .tooltip.visible { opacity: 1; }
-    .tooltip .tip-name { font-weight: 700; margin-bottom: 2px; }
-    .tooltip .tip-type { font-size: .9em; opacity: .8; }
+    .tooltip.visible { opacity:1; }
+    .tooltip .tip-name { font-weight:700;margin-bottom:2px; }
+    .tooltip .tip-type { font-size:.9em;opacity:.8; }
 
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: var(--bg); }
-    ::-webkit-scrollbar-thumb { background: var(--ink-faint); border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
+    /* TEAM BADGE in row */
+    .team-badges {
+      display:flex;gap:3px;margin-left:4px;flex-shrink:0;
+    }
+
+    .team-badge {
+      width:8px;height:8px;border-radius:50%;flex-shrink:0;
+    }
+
+    ::-webkit-scrollbar { width:6px;height:6px; }
+    ::-webkit-scrollbar-track { background:var(--bg); }
+    ::-webkit-scrollbar-thumb { background:var(--ink-faint);border-radius:3px; }
+    ::-webkit-scrollbar-thumb:hover { background:var(--ink-soft); }
 
     @media print {
-      body { overflow: visible; }
-      .topbar, .stats-bar { display: none; }
-      .planning-container { padding: 0; }
-      .grid-body { overflow: visible; }
+      body{overflow:visible;}.topbar,.stats-bar{display:none;}
+      .planning-container{padding:0;}.grid-body{overflow:visible;}
     }
 
-    @media (max-width: 768px) {
-      .grid-row-name { width: 120px; min-width: 120px; font-size: .78em; padding: 6px 8px; }
-      .grid-header-name { width: 120px; min-width: 120px; }
-      .stats-bar { padding: 8px 12px; gap: 8px; }
-      .topbar { padding: 0 10px; gap: 8px; overflow-x: auto; }
-      .month-display { min-width: 100px; font-size: .9em; }
+    @media (max-width:768px) {
+      .grid-row-name{width:120px;min-width:120px;font-size:.78em;padding:6px 8px;}
+      .grid-header-name{width:120px;min-width:120px;}
+      .stats-bar{padding:8px 12px;gap:8px;}
+      .topbar{padding:0 10px;gap:8px;overflow-x:auto;}
+      .month-display{min-width:100px;font-size:.9em;}
     }
 
-    .swal2-popup { border-radius: 16px !important; font-family: 'DM Sans', sans-serif !important; }
-    .swal2-title { font-family: 'DM Serif Display', serif !important; font-weight: 400 !important; }
-    .swal2-confirm { border-radius: 8px !important; font-family: 'DM Sans', sans-serif !important; font-weight: 700 !important; }
-    .swal2-cancel { border-radius: 8px !important; font-family: 'DM Sans', sans-serif !important; font-weight: 700 !important; }
+    .swal2-popup{border-radius:16px!important;font-family:'DM Sans',sans-serif!important;}
+    .swal2-title{font-family:'DM Serif Display',serif!important;font-weight:400!important;}
+    .swal2-confirm{border-radius:8px!important;font-family:'DM Sans',sans-serif!important;font-weight:700!important;}
+    .swal2-cancel{border-radius:8px!important;font-family:'DM Sans',sans-serif!important;font-weight:700!important;}
   </style>
 </head>
 <body>
 
 <div id="loading-screen">
   <div class="spinner"></div>
-  <p style="color:var(--ink-soft); font-weight:500;">Chargement du planning collectif…</p>
+  <p style="color:var(--ink-soft);font-weight:500;">Chargement du planning collectif…</p>
 </div>
 
 <div class="tooltip" id="tooltip">
@@ -516,9 +295,7 @@
 
 <div id="main-app">
   <div class="topbar">
-    <div class="topbar-brand">
-      <span>👥</span> Planning Collectif
-    </div>
+    <div class="topbar-brand"><span>👥</span> Planning Collectif</div>
 
     <div class="month-nav">
       <button class="month-btn" onclick="changeMonth(-1)">◀</button>
@@ -527,6 +304,14 @@
     </div>
 
     <button class="btn-today" onclick="goToday()">Aujourd'hui</button>
+
+    <!-- FILTRE ÉQUIPE -->
+    <div class="team-filter">
+      <span class="team-filter-label">Équipe :</span>
+      <select class="team-select" id="team-select" onchange="onTeamFilter()">
+        <option value="ALL">👥 Tous les collaborateurs</option>
+      </select>
+    </div>
 
     <div class="topbar-spacer"></div>
 
@@ -551,13 +336,13 @@
 
       <div class="legend">
         <span class="legend-label">Légende :</span>
-        <div id="legend-items" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+        <div id="legend-items" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
           <div class="legend-item">
-            <div class="legend-dot" style="background:repeating-linear-gradient(45deg,#fecaca,#fecaca 2px,#fff 2px,#fff 4px); border:1px solid #fca5a5;"></div>
+            <div class="legend-dot" style="background:repeating-linear-gradient(45deg,#fecaca,#fecaca 2px,#fff 2px,#fff 4px);border:1px solid #fca5a5;"></div>
             <span style="font-style:italic;">Jour férié</span>
           </div>
           <div class="legend-item">
-            <div class="legend-dot" style="background:rgba(0,0,0,.05); border:1px solid var(--border);"></div>
+            <div class="legend-dot" style="background:rgba(0,0,0,.05);border:1px solid var(--border);"></div>
             <span>Week-end</span>
           </div>
         </div>
@@ -572,27 +357,23 @@
   import { getFirestore, collection, getDocs, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   const firebaseConfig = {
-    apiKey: "AIzaSyB0uDfGAHq99p1VqRNj9pap-E7J52JlQ3w",
-    authDomain: "monplanningconges.firebaseapp.com",
-    projectId: "monplanningconges",
-    storageBucket: "monplanningconges.firebasestorage.app",
-    messagingSenderId: "633023003902",
-    appId: "1:633023003902:web:de61338ee094cf3b7639af"
+    apiKey:"AIzaSyB0uDfGAHq99p1VqRNj9pap-E7J52JlQ3w",authDomain:"monplanningconges.firebaseapp.com",
+    projectId:"monplanningconges",storageBucket:"monplanningconges.firebasestorage.app",
+    messagingSenderId:"633023003902",appId:"1:633023003902:web:de61338ee094cf3b7639af"
   };
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  const MONTH_NAMES = [
-    'Janvier','Février','Mars','Avril','Mai','Juin',
-    'Juillet','Août','Septembre','Octobre','Novembre','Décembre'
-  ];
+  const MONTH_NAMES = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
   const DAY_NAMES = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
 
   let currentMonth = new Date().getMonth();
   let currentYear = new Date().getFullYear();
   let allUsersData = [];
+  let allTeams = [];
+  let selectedTeamId = 'ALL';
 
   const AVATAR_COLORS = [
     '#4f6ef7','#7c3aed','#ec4899','#f59e0b','#22c55e',
@@ -601,89 +382,78 @@
   ];
 
   function fmtDate(d) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const j = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${j}`;
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   }
 
   function getHolidays(y) {
     const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m2=Math.floor((a+11*h+22*l)/451),n=Math.floor((h+l-7*m2+114)/31),p=(h+l-7*m2+114)%31;
-    const paques = new Date(y, n - 1, p + 1);
-    const add = (date, nb) => { const r = new Date(date); r.setDate(r.getDate() + nb); return fmtDate(r); };
-    return {
-      [`${y}-01-01`]: "Jour de l'An",
-      [add(paques, 1)]:  "Lundi de Pâques",
-      [`${y}-05-01`]:    "Fête du Travail",
-      [`${y}-05-08`]:    "Victoire 1945",
-      [add(paques, 39)]: "Ascension",
-      [add(paques, 50)]: "Lundi de Pentecôte",
-      [`${y}-07-14`]:    "Fête Nationale",
-      [`${y}-08-15`]:    "Assomption",
-      [`${y}-11-01`]:    "Toussaint",
-      [`${y}-11-11`]:    "Armistice",
-      [`${y}-12-25`]:    "Noël"
-    };
+    const paques=new Date(y,n-1,p+1);
+    const add=(date,nb)=>{const r=new Date(date);r.setDate(r.getDate()+nb);return fmtDate(r);};
+    return{[`${y}-01-01`]:"Jour de l'An",[add(paques,1)]:"Lundi de Pâques",[`${y}-05-01`]:"Fête du Travail",[`${y}-05-08`]:"Victoire 1945",[add(paques,39)]:"Ascension",[add(paques,50)]:"Lundi de Pentecôte",[`${y}-07-14`]:"Fête Nationale",[`${y}-08-15`]:"Assomption",[`${y}-11-01`]:"Toussaint",[`${y}-11-11`]:"Armistice",[`${y}-12-25`]:"Noël"};
   }
 
-  /* ── NAVIGATION ── */
+  // NAV
   window.changeMonth = (delta) => {
     currentMonth += delta;
     if (currentMonth > 11) { currentMonth = 0; currentYear++; }
     if (currentMonth < 0) { currentMonth = 11; currentYear--; }
-    updateDisplay();
-    renderPlanning();
+    updateDisplay(); renderPlanning();
   };
 
   window.goToday = () => {
-    const now = new Date();
-    currentMonth = now.getMonth();
-    currentYear = now.getFullYear();
-    updateDisplay();
-    renderPlanning();
+    const now = new Date(); currentMonth = now.getMonth(); currentYear = now.getFullYear();
+    updateDisplay(); renderPlanning();
   };
 
   window.exportPDF = () => {
-    Swal.fire({
-      title: 'Export PDF',
-      text: 'Utilisez Ctrl+P / Cmd+P pour imprimer ou enregistrer en PDF.',
-      icon: 'info',
-      confirmButtonText: 'Compris',
-      confirmButtonColor: 'var(--accent)'
-    });
+    Swal.fire({title:'Export PDF',text:'Utilisez Ctrl+P / Cmd+P.',icon:'info',confirmButtonText:'Compris',confirmButtonColor:'var(--accent)'});
     setTimeout(() => window.print(), 500);
   };
 
+  window.onTeamFilter = () => {
+    selectedTeamId = document.getElementById('team-select').value;
+    renderPlanning();
+  };
+
   function updateDisplay() {
-    document.getElementById('month-display').textContent =
-      `${MONTH_NAMES[currentMonth]} ${currentYear}`;
+    document.getElementById('month-display').textContent = `${MONTH_NAMES[currentMonth]} ${currentYear}`;
   }
 
-  /* ── TOOLTIP ── */
+  // TOOLTIP
   const tooltip = document.getElementById('tooltip');
   const tipName = document.getElementById('tip-name');
   const tipType = document.getElementById('tip-type');
 
   window.showTip = (e, name, type) => {
-    tipName.textContent = name;
-    tipType.textContent = type;
+    tipName.textContent = name; tipType.textContent = type;
     tooltip.style.left = (e.clientX + 12) + 'px';
     tooltip.style.top = (e.clientY - 10) + 'px';
     tooltip.classList.add('visible');
   };
 
-  window.hideTip = () => {
-    tooltip.classList.remove('visible');
-  };
+  window.hideTip = () => { tooltip.classList.remove('visible'); };
 
-  /* ── RENDER ── */
+  // GET FILTERED USERS
+  function getFilteredUsers() {
+    if (selectedTeamId === 'ALL') return allUsersData;
+    const team = allTeams.find(t => t.id === selectedTeamId);
+    if (!team) return allUsersData;
+    return allUsersData.filter(u => (team.members || []).includes(u.uid));
+  }
+
+  // Get teams for a user
+  function getUserTeams(uid) {
+    return allTeams.filter(t => (t.members || []).includes(uid));
+  }
+
+  // RENDER
   function renderPlanning() {
     const headerEl = document.getElementById('grid-header');
     const bodyEl = document.getElementById('grid-body');
-
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const holidays = getHolidays(currentYear);
     const todayStr = fmtDate(new Date());
+    const filteredUsers = getFilteredUsers();
 
     // HEADER
     let headerHTML = '<div class="grid-header-name">Collaborateur</div>';
@@ -694,28 +464,17 @@
       const isWeekend = dow === 0 || dow === 6;
       const isToday = dateStr === todayStr;
       const isHoliday = holidays[dateStr];
-
       let cls = 'grid-header-day';
       if (isToday) cls += ' today';
       else if (isHoliday) cls += ' holiday';
       else if (isWeekend) cls += ' weekend';
-
-      headerHTML += `
-        <div class="${cls}" title="${isHoliday || ''}">
-          <span class="day-name">${DAY_NAMES[dow]}</span>
-          <span class="day-num">${d}</span>
-        </div>`;
+      headerHTML += `<div class="${cls}" title="${isHoliday||''}"><span class="day-name">${DAY_NAMES[dow]}</span><span class="day-num">${d}</span></div>`;
     }
     headerEl.innerHTML = headerHTML;
 
     // BODY
-    if (allUsersData.length === 0) {
-      bodyEl.innerHTML = `
-        <div class="empty-state">
-          <div class="icon">📋</div>
-          <div class="text">Aucun collaborateur trouvé</div>
-          <div class="sub">Les utilisateurs inscrits apparaîtront ici</div>
-        </div>`;
+    if (filteredUsers.length === 0) {
+      bodyEl.innerHTML = `<div class="empty-state"><div class="icon">📋</div><div class="text">Aucun collaborateur${selectedTeamId !== 'ALL' ? ' dans cette équipe' : ''}</div><div class="sub">${selectedTeamId !== 'ALL' ? 'Ajoutez des membres à cette équipe depuis la page principale' : 'Les utilisateurs inscrits apparaîtront ici'}</div></div>`;
       renderStats(0, 0, 0);
       return;
     }
@@ -725,21 +484,26 @@
     const absencesByDay = {};
     for (let d = 1; d <= daysInMonth; d++) absencesByDay[d] = 0;
 
-    allUsersData.forEach((user, idx) => {
+    filteredUsers.forEach((user, idx) => {
       const color = AVATAR_COLORS[idx % AVATAR_COLORS.length];
       const name = user.displayName || 'Utilisateur';
       const initials = name.substring(0, 2).toUpperCase();
+      const userTeams = getUserTeams(user.uid);
 
       let daysOff = 0;
 
+      // Team badges HTML
+      let teamBadgesHTML = '';
+      if (userTeams.length > 0) {
+        teamBadgesHTML = '<div class="team-badges">';
+        userTeams.forEach(t => {
+          teamBadgesHTML += `<div class="team-badge" style="background:${t.color};" title="${t.name}"></div>`;
+        });
+        teamBadgesHTML += '</div>';
+      }
+
       bodyHTML += `<div class="grid-row">`;
-      bodyHTML += `
-        <div class="grid-row-name">
-          <div class="avatar" style="background:${color};">${initials}</div>
-          <span class="name-text" title="${name}">${name}</span>
-          <span class="days-count" id="count-${idx}">0j</span>
-        </div>
-        <div class="grid-row-days">`;
+      bodyHTML += `<div class="grid-row-name"><div class="avatar" style="background:${color};">${initials}</div><span class="name-text" title="${name}">${name}</span>${teamBadgesHTML}<span class="days-count" id="count-${idx}">0j</span></div><div class="grid-row-days">`;
 
       for (let d = 1; d <= daysInMonth; d++) {
         const dateObj = new Date(currentYear, currentMonth, d);
@@ -755,7 +519,6 @@
         if (isHoliday) cellClass += ' holiday-col';
 
         const leaves = (user.leaves || []).filter(l => l.start === dateStr);
-
         let cellContent = '';
 
         if (leaves.length > 0) {
@@ -764,32 +527,15 @@
             const isAM = l.title.includes('(Matin)');
             const isPM = l.title.includes('(Apr-Midi)');
             const bg = l.backgroundColor || '#9ca3af';
-
             let barClass = 'cell-event';
-            if (isHalf) {
-              barClass += ' half';
-              if (isAM) barClass += ' am';
-              if (isPM) barClass += ' pm';
-            }
-
+            if (isHalf) { barClass += ' half'; if (isAM) barClass += ' am'; if (isPM) barClass += ' pm'; }
             let shortTitle = l.title.replace(/ \(Matin\)| \(Apr-Midi\)/g, '');
             if (shortTitle.length > 4) shortTitle = shortTitle.substring(0, 3) + '…';
-
-            // Échapper les apostrophes pour les attributs inline
             const safeName = name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
             const safeTitle = l.title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-
-            cellContent += `
-              <div class="${barClass}"
-                   style="background:${bg};"
-                   onmouseenter="showTip(event, '${safeName}', '${safeTitle}')"
-                   onmouseleave="hideTip()">
-                ${shortTitle}
-              </div>`;
-
+            cellContent += `<div class="${barClass}" style="background:${bg};" onmouseenter="showTip(event,'${safeName}','${safeTitle}')" onmouseleave="hideTip()">${shortTitle}</div>`;
             daysOff += (l.value || 1);
           });
-
           absencesByDay[d] = (absencesByDay[d] || 0) + 1;
         }
 
@@ -797,10 +543,8 @@
       }
 
       totalAbsentDays += daysOff;
-
       bodyHTML += `</div></div>`;
 
-      // Mettre à jour le compteur après rendu
       setTimeout(() => {
         const countEl = document.getElementById(`count-${idx}`);
         if (countEl) countEl.textContent = `${Number(daysOff.toFixed(1))}j`;
@@ -814,43 +558,30 @@
       if (absencesByDay[d] > maxAbsentSameDay) maxAbsentSameDay = absencesByDay[d];
     }
 
-    renderStats(allUsersData.length, maxAbsentSameDay, totalAbsentDays);
+    renderStats(filteredUsers.length, maxAbsentSameDay, totalAbsentDays);
     renderLegend();
   }
 
   function renderStats(totalUsers, maxSimultaneous, totalDays) {
     const statsEl = document.getElementById('stats-bar');
     const warnClass = maxSimultaneous >= Math.ceil(totalUsers * 0.5) ? 'danger' : (maxSimultaneous >= 2 ? 'warn' : '');
+    const teamLabel = selectedTeamId !== 'ALL' ? ` (${allTeams.find(t=>t.id===selectedTeamId)?.name || 'Équipe'})` : '';
 
     statsEl.innerHTML = `
-      <div class="stat-chip">
-        <div class="num">${totalUsers}</div>
-        <span>Collaborateur${totalUsers > 1 ? 's' : ''}</span>
-      </div>
-      <div class="stat-chip ${warnClass}">
-        <div class="num">${maxSimultaneous}</div>
-        <span>Max. absents simultanés</span>
-      </div>
-      <div class="stat-chip">
-        <div class="num">${Number(totalDays.toFixed(1))}</div>
-        <span>Jours d'absence total</span>
-      </div>`;
+      <div class="stat-chip"><div class="num">${totalUsers}</div><span>Collaborateur${totalUsers>1?'s':''}${teamLabel}</span></div>
+      <div class="stat-chip ${warnClass}"><div class="num">${maxSimultaneous}</div><span>Max. absents simultanés</span></div>
+      <div class="stat-chip"><div class="num">${Number(totalDays.toFixed(1))}</div><span>Jours d'absence total</span></div>`;
   }
 
   function renderLegend() {
     const leg = document.getElementById('legend-items');
     leg.innerHTML = `
-      <div class="legend-item">
-        <div class="legend-dot" style="background:repeating-linear-gradient(45deg,#fecaca,#fecaca 2px,#fff 2px,#fff 4px); border:1px solid #fca5a5;"></div>
-        <span style="font-style:italic;">Jour férié</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-dot" style="background:rgba(0,0,0,.05); border:1px solid var(--border);"></div>
-        <span>Week-end</span>
-      </div>`;
+      <div class="legend-item"><div class="legend-dot" style="background:repeating-linear-gradient(45deg,#fecaca,#fecaca 2px,#fff 2px,#fff 4px);border:1px solid #fca5a5;"></div><span style="font-style:italic;">Jour férié</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(0,0,0,.05);border:1px solid var(--border);"></div><span>Week-end</span></div>`;
 
     const types = {};
-    allUsersData.forEach(u => {
+    const usersToShow = getFilteredUsers();
+    usersToShow.forEach(u => {
       (u.leaves || []).forEach(l => {
         const base = l.title.replace(/ \(Matin\)| \(Apr-Midi\)/g, '');
         if (!types[base]) types[base] = l.backgroundColor || '#9ca3af';
@@ -858,66 +589,79 @@
     });
 
     Object.keys(types).forEach(name => {
-      const item = document.createElement('div');
-      item.className = 'legend-item';
-      item.innerHTML = `
-        <div class="legend-dot" style="background:${types[name]};"></div>
-        <span>${name}</span>`;
+      const item = document.createElement('div'); item.className = 'legend-item';
+      item.innerHTML = `<div class="legend-dot" style="background:${types[name]};"></div><span>${name}</span>`;
       leg.appendChild(item);
     });
+
+    // Team legend
+    if (allTeams.length > 0) {
+      const sep = document.createElement('span');
+      sep.style.cssText = 'width:1px;height:14px;background:var(--border);margin:0 4px;';
+      leg.appendChild(sep);
+
+      allTeams.forEach(t => {
+        const item = document.createElement('div'); item.className = 'legend-item';
+        item.innerHTML = `<div class="legend-dot" style="background:${t.color};border-radius:50%;width:10px;height:10px;"></div><span style="font-style:italic;color:var(--ink-soft);">${t.name}</span>`;
+        leg.appendChild(item);
+      });
+    }
   }
 
-  /* ── FETCH ALL USERS ── */
+  function renderTeamSelect() {
+    const select = document.getElementById('team-select');
+    const currentVal = select.value;
+    select.innerHTML = '<option value="ALL">👥 Tous les collaborateurs</option>';
+    allTeams.forEach(t => {
+      const count = (t.members || []).length;
+      select.innerHTML += `<option value="${t.id}">● ${t.name} (${count})</option>`;
+    });
+    select.value = currentVal || 'ALL';
+    if (!select.value) select.value = 'ALL';
+  }
+
+  // FETCH
   async function fetchAllUsers() {
     try {
       const snapshot = await getDocs(collection(db, "users"));
       allUsersData = [];
       snapshot.forEach(docSnap => {
         const data = docSnap.data();
-
-        // Déterminer le meilleur nom à afficher
         let name = data.displayName || '';
-        const looksLikeUID = /^[a-zA-Z0-9]{20,}$/.test(name);
-
-        if (!name || looksLikeUID) {
-          // Fallback : utiliser l'ID tronqué (l'email n'est pas stocké dans le doc par défaut)
-          name = docSnap.id.substring(0, 10);
-        }
-
-        allUsersData.push({
-          uid: docSnap.id,
-          displayName: name,
-          leaves: data.leaves || [],
-          config: data.config || {}
-        });
+        if (!name || /^[a-zA-Z0-9]{20,}$/.test(name)) name = docSnap.id.substring(0, 10);
+        allUsersData.push({ uid: docSnap.id, displayName: name, leaves: data.leaves || [], config: data.config || {} });
       });
-
-      // Trier par nom alphabétique
       allUsersData.sort((a, b) => a.displayName.localeCompare(b.displayName));
-      renderPlanning();
     } catch (err) {
       console.error('Erreur chargement utilisateurs:', err);
-      Swal.fire({
-        icon: 'error',
-        title: 'Erreur d\'accès',
-        html: `<p>Impossible de charger les données des collaborateurs.</p>
-               <p style="font-size:.85em; color:var(--ink-soft); margin-top:8px;">
-                 Vérifiez les règles Firestore pour autoriser la lecture de la collection <code>users</code>.
-               </p>`,
-        confirmButtonColor: 'var(--accent)'
-      });
+      Swal.fire({icon:'error',title:'Erreur d\'accès',html:'<p>Impossible de charger les données.</p><p style="font-size:.85em;color:var(--ink-soft);margin-top:8px;">Vérifiez les règles Firestore.</p>',confirmButtonColor:'var(--accent)'});
     }
   }
 
-  /* ── AUTH ── */
+  async function fetchTeams() {
+    try {
+      const snapshot = await getDocs(collection(db, "teams"));
+      allTeams = [];
+      snapshot.forEach(d => allTeams.push({ id: d.id, ...d.data() }));
+      allTeams.sort((a, b) => a.name.localeCompare(b.name));
+      renderTeamSelect();
+    } catch (err) {
+      console.error('Erreur chargement équipes:', err);
+    }
+  }
+
+  // AUTH
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       await fetchAllUsers();
+      await fetchTeams();
+      renderPlanning();
 
-      // Écouter les changements en temps réel sur son propre document
-      // pour déclencher un refresh quand quelqu'un pose un congé
+      // Écouter les changements pour refresh
       onSnapshot(doc(db, "users", user.uid), async () => {
         await fetchAllUsers();
+        await fetchTeams();
+        renderPlanning();
       });
 
       document.getElementById('loading-screen').style.display = 'none';
