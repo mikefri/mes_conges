@@ -46,6 +46,7 @@
       -webkit-font-smoothing: antialiased;
     }
 
+    /* ── AUTH SCREEN ── */
     #auth-screen {
       display: flex;
       align-items: center;
@@ -129,6 +130,7 @@
     .btn-primary:hover { background: var(--accent-h); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,110,247,.3); }
     .btn-primary:active { transform: translateY(0); }
 
+    /* ── MAIN APP ── */
     #main-app { display: none; height: 100vh; flex-direction: column; }
 
     .topbar {
@@ -148,6 +150,13 @@
       display: flex; align-items: center; gap: 8px; background: var(--bg);
       border: 1px solid var(--border); border-radius: 999px; padding: 5px 14px 5px 8px;
       font-size: .82em; font-weight: 500; color: var(--ink);
+      cursor: pointer; transition: var(--transition); user-select: none;
+    }
+
+    .user-chip:hover {
+      border-color: var(--accent);
+      background: rgba(79,110,247,.04);
+      box-shadow: 0 0 0 3px rgba(79,110,247,.08);
     }
 
     .user-avatar {
@@ -412,7 +421,6 @@
     }
 
     .team-item:hover { border-color: var(--ink-faint); }
-
     .team-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .team-name { flex: 1; font-weight: 500; }
     .team-count { font-size: .75em; color: var(--ink-soft); font-weight: 600; }
@@ -436,22 +444,87 @@
 
     .btn-add-team:hover { background: #6d28d9; }
 
-    /* MEMBER CHECKBOX LIST */
-    .member-check-list { display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto; }
-
-    .member-check {
-      display: flex; align-items: center; gap: 8px; padding: 6px 8px;
-      border-radius: 6px; cursor: pointer; transition: var(--transition);
-      font-size: .85em;
+    /* ── PROFILE POPUP STYLES ── */
+    .profile-field {
+      margin-bottom: 16px;
+      text-align: left;
     }
 
-    .member-check:hover { background: var(--bg); }
-
-    .member-check input[type="checkbox"] {
-      accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer;
+    .profile-field label {
+      display: block;
+      font-size: .78em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--ink-soft);
+      margin-bottom: 5px;
     }
 
-    .member-check-name { font-weight: 500; }
+    .profile-field input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: 'DM Sans', sans-serif;
+      font-size: .95em;
+      color: var(--ink);
+      outline: none;
+      transition: var(--transition);
+      background: var(--bg);
+    }
+
+    .profile-field input:focus {
+      border-color: var(--accent);
+      background: white;
+      box-shadow: 0 0 0 3px rgba(79,110,247,.12);
+    }
+
+    .profile-field input:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    .profile-avatar-big {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5em;
+      font-weight: 800;
+      margin: 0 auto 20px;
+      box-shadow: 0 4px 16px rgba(79,110,247,.3);
+    }
+
+    .profile-email-display {
+      text-align: center;
+      color: var(--ink-soft);
+      font-size: .82em;
+      margin-bottom: 20px;
+      padding: 8px 12px;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .profile-separator {
+      height: 1px;
+      background: var(--border);
+      margin: 16px 0;
+    }
+
+    .profile-section-title {
+      font-size: .72em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--ink-faint);
+      margin-bottom: 12px;
+      text-align: left;
+    }
 
     @media (max-width: 768px) {
       .panel { width: 100%; min-width: unset; border-right: none; border-bottom: 1px solid var(--border); height: auto; max-height: 50vh; }
@@ -501,9 +574,10 @@
     <a href="planning.html" class="nav-link" style="background: var(--accent);">📅 Planning Annuel</a>
     <a href="collectif.html" class="nav-link" style="background: #7c3aed;">👥 Planning Collectif</a>
     <button class="btn-icon" title="Aide" onclick="showHelp()">?</button>
-    <div class="user-chip">
+    <div class="user-chip" id="user-chip" onclick="openProfile()" title="Cliquez pour modifier votre profil">
       <div class="user-avatar" id="user-avatar-initials"></div>
       <span id="user-display"></span>
+      <span style="font-size:.7em; color:var(--ink-faint); margin-left:2px;">✏️</span>
     </div>
     <button class="btn-icon" title="Déconnexion" onclick="doLogout()" style="border-color: rgba(239,68,68,.3); color: var(--danger);">✕</button>
   </div>
@@ -602,7 +676,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updatePassword, EmailAuthProvider, reauthenticateWithCredential, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
   import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs, addDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -631,7 +705,7 @@
     return `${y}-${m}-${j}`;
   }
 
-  // AUTH
+  // ── AUTH ──
   window.switchAuthTab = (mode) => {
     document.getElementById('tab-login').classList.toggle('active', mode==='login');
     document.getElementById('tab-signup').classList.toggle('active', mode==='signup');
@@ -659,6 +733,142 @@
 
   window.doLogout = async () => { await signOut(auth); window.location.reload(); };
 
+  // ── PROFILE ──
+  window.openProfile = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const currentName = userData.displayName || '';
+    const email = user.email || '';
+    const initials = currentName ? currentName.substring(0, 2).toUpperCase() : email[0]?.toUpperCase() || 'U';
+
+    const { value: formValues } = await Swal.fire({
+      title: 'Mon Profil',
+      width: '420px',
+      showCancelButton: true,
+      confirmButtonText: '💾 Enregistrer',
+      cancelButtonText: 'Annuler',
+      confirmButtonColor: '#4f6ef7',
+      cancelButtonColor: '#6b7280',
+      html: `
+        <div class="profile-avatar-big" style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#4f6ef7,#7c3aed);display:flex;align-items:center;justify-content:center;color:white;font-size:1.5em;font-weight:800;margin:0 auto 16px;box-shadow:0 4px 16px rgba(79,110,247,.3);">
+          ${initials}
+        </div>
+        <div style="text-align:center;color:#6b7280;font-size:.82em;margin-bottom:20px;padding:8px 12px;background:#f5f6fa;border-radius:8px;border:1px solid #e5e7eb;">
+          📧 ${email}
+        </div>
+
+        <div style="height:1px;background:#e5e7eb;margin:0 0 16px;"></div>
+        <div style="font-size:.72em;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#c4c9d4;margin-bottom:12px;text-align:left;">
+          Informations personnelles
+        </div>
+
+        <div style="margin-bottom:14px;text-align:left;">
+          <label style="display:block;font-size:.78em;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;margin-bottom:5px;">
+            Prénom & Nom
+          </label>
+          <input type="text" id="swal-profile-name" value="${currentName}" placeholder="Jean Dupont"
+            style="width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.95em;color:#0f1117;outline:none;background:#f5f6fa;transition:.18s ease;"
+            onfocus="this.style.borderColor='#4f6ef7';this.style.background='white';this.style.boxShadow='0 0 0 3px rgba(79,110,247,.12)'"
+            onblur="this.style.borderColor='#e5e7eb';this.style.background='#f5f6fa';this.style.boxShadow='none'">
+        </div>
+
+        <div style="height:1px;background:#e5e7eb;margin:16px 0;"></div>
+        <div style="font-size:.72em;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#c4c9d4;margin-bottom:12px;text-align:left;">
+          Sécurité
+        </div>
+
+        <div style="margin-bottom:14px;text-align:left;">
+          <label style="display:block;font-size:.78em;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;margin-bottom:5px;">
+            Nouveau mot de passe <span style="font-weight:400;font-size:.9em;color:#c4c9d4;">(laisser vide pour ne pas changer)</span>
+          </label>
+          <input type="password" id="swal-profile-password" placeholder="••••••••"
+            style="width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.95em;color:#0f1117;outline:none;background:#f5f6fa;transition:.18s ease;"
+            onfocus="this.style.borderColor='#4f6ef7';this.style.background='white';this.style.boxShadow='0 0 0 3px rgba(79,110,247,.12)'"
+            onblur="this.style.borderColor='#e5e7eb';this.style.background='#f5f6fa';this.style.boxShadow='none'">
+        </div>
+
+        <div style="margin-bottom:14px;text-align:left;" id="swal-current-pw-group" style="display:none;">
+          <label style="display:block;font-size:.78em;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;margin-bottom:5px;">
+            Mot de passe actuel <span style="font-weight:400;font-size:.9em;color:#c4c9d4;">(requis pour changer le mot de passe)</span>
+          </label>
+          <input type="password" id="swal-profile-current-password" placeholder="Mot de passe actuel"
+            style="width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.95em;color:#0f1117;outline:none;background:#f5f6fa;transition:.18s ease;"
+            onfocus="this.style.borderColor='#4f6ef7';this.style.background='white';this.style.boxShadow='0 0 0 3px rgba(79,110,247,.12)'"
+            onblur="this.style.borderColor='#e5e7eb';this.style.background='#f5f6fa';this.style.boxShadow='none'">
+        </div>
+
+        <button type="button" onclick="document.dispatchEvent(new CustomEvent('reset-pw'))"
+          style="width:100%;padding:10px;background:rgba(79,110,247,.06);color:#4f6ef7;border:1.5px solid rgba(79,110,247,.2);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.82em;font-weight:700;cursor:pointer;transition:.18s ease;margin-top:4px;">
+          📧 Recevoir un email de réinitialisation
+        </button>
+      `,
+      focusConfirm: false,
+      didOpen: () => {
+        // Listen for reset password button
+        const handler = async () => {
+          try {
+            await sendPasswordResetEmail(auth, email);
+            Swal.fire({
+              icon: 'success',
+              title: 'Email envoyé !',
+              text: `Un email de réinitialisation a été envoyé à ${email}`,
+              confirmButtonColor: '#4f6ef7',
+              timer: 4000
+            });
+          } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Erreur', text: err.message, confirmButtonColor: '#4f6ef7' });
+          }
+        };
+        document.addEventListener('reset-pw', handler, { once: true });
+      },
+      preConfirm: () => {
+        return {
+          name: document.getElementById('swal-profile-name').value.trim(),
+          newPassword: document.getElementById('swal-profile-password').value,
+          currentPassword: document.getElementById('swal-profile-current-password').value
+        };
+      }
+    });
+
+    if (!formValues) return;
+
+    let changed = false;
+
+    // Update display name
+    if (formValues.name && formValues.name !== currentName) {
+      userData.displayName = formValues.name;
+      await setDoc(doc(db, "users", user.uid), userData);
+      changed = true;
+    }
+
+    // Update password
+    if (formValues.newPassword) {
+      if (formValues.newPassword.length < 6) {
+        return Swal.fire({ icon: 'warning', title: 'Mot de passe trop court', text: 'Le mot de passe doit contenir au moins 6 caractères.', confirmButtonColor: '#4f6ef7' });
+      }
+      if (!formValues.currentPassword) {
+        return Swal.fire({ icon: 'warning', title: 'Mot de passe actuel requis', text: 'Entrez votre mot de passe actuel pour le modifier.', confirmButtonColor: '#4f6ef7' });
+      }
+      try {
+        // Ré-authentification requise pour changer le mot de passe
+        const credential = EmailAuthProvider.credential(email, formValues.currentPassword);
+        await reauthenticateWithCredential(user, credential);
+        await updatePassword(user, formValues.newPassword);
+        changed = true;
+      } catch (err) {
+        let msg = err.message;
+        if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') msg = 'Mot de passe actuel incorrect.';
+        return Swal.fire({ icon: 'error', title: 'Erreur', text: msg, confirmButtonColor: '#4f6ef7' });
+      }
+    }
+
+    if (changed) {
+      showToast('✅ Profil mis à jour');
+    }
+  };
+
+  // ── TOGGLES ──
   window.toggleConfig = () => {
     document.getElementById('config-body').classList.toggle('open');
     document.getElementById('config-chevron').classList.toggle('open');
@@ -733,14 +943,12 @@
     showToast('✅ Congé enregistré');
   };
 
-  // TEAMS
+  // ── TEAMS ──
   window.createTeam = async () => {
     const name = document.getElementById('new-team-name').value.trim();
     const color = document.getElementById('new-team-color').value;
     if (!name) return showToast('⚠️ Donnez un nom à l\'équipe', 'warn');
-    await addDoc(collection(db, "teams"), {
-      name, color, members: [], createdBy: auth.currentUser.uid
-    });
+    await addDoc(collection(db, "teams"), { name, color, members: [], createdBy: auth.currentUser.uid });
     document.getElementById('new-team-name').value = '';
     showToast('✅ Équipe créée');
     await loadTeams();
@@ -748,49 +956,21 @@
 
   window.deleteTeam = async (teamId) => {
     const res = await Swal.fire({ title:'Supprimer cette équipe ?', icon:'warning', showCancelButton:true, confirmButtonColor:'var(--danger)', cancelButtonColor:'var(--ink-soft)', confirmButtonText:'Supprimer', cancelButtonText:'Annuler' });
-    if (res.isConfirmed) {
-      await deleteDoc(doc(db, "teams", teamId));
-      showToast('🗑 Équipe supprimée');
-      await loadTeams();
-    }
+    if (res.isConfirmed) { await deleteDoc(doc(db, "teams", teamId)); showToast('🗑 Équipe supprimée'); await loadTeams(); }
   };
 
   window.editTeamMembers = async (teamId) => {
     const team = allTeams.find(t => t.id === teamId);
     if (!team) return;
-
     let html = '<div style="text-align:left; max-height:350px; overflow-y:auto;">';
     allUsers.forEach(u => {
       const checked = (team.members || []).includes(u.uid) ? 'checked' : '';
       const safeName = (u.displayName || u.uid.substring(0,8)).replace(/"/g, '&quot;');
-      html += `
-        <label class="member-check" style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:6px;cursor:pointer;margin-bottom:4px;">
-          <input type="checkbox" value="${u.uid}" ${checked} style="accent-color:#7c3aed;width:16px;height:16px;">
-          <span style="font-weight:500;font-size:.9em;">${safeName}</span>
-        </label>`;
+      html += `<label style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:6px;cursor:pointer;margin-bottom:4px;"><input type="checkbox" value="${u.uid}" ${checked} style="accent-color:#7c3aed;width:16px;height:16px;"><span style="font-weight:500;font-size:.9em;">${safeName}</span></label>`;
     });
     html += '</div>';
-
-    const res = await Swal.fire({
-      title: `Membres · ${team.name}`,
-      html,
-      showCancelButton: true,
-      confirmButtonText: 'Enregistrer',
-      cancelButtonText: 'Annuler',
-      confirmButtonColor: '#7c3aed',
-      cancelButtonColor: 'var(--ink-soft)',
-      width: '400px',
-      preConfirm: () => {
-        const checks = Swal.getPopup().querySelectorAll('input[type="checkbox"]:checked');
-        return Array.from(checks).map(c => c.value);
-      }
-    });
-
-    if (res.isConfirmed) {
-      await updateDoc(doc(db, "teams", teamId), { members: res.value });
-      showToast('✅ Membres mis à jour');
-      await loadTeams();
-    }
+    const res = await Swal.fire({ title:`Membres · ${team.name}`, html, showCancelButton:true, confirmButtonText:'Enregistrer', cancelButtonText:'Annuler', confirmButtonColor:'#7c3aed', cancelButtonColor:'var(--ink-soft)', width:'400px', preConfirm:()=>{ const checks = Swal.getPopup().querySelectorAll('input[type="checkbox"]:checked'); return Array.from(checks).map(c => c.value); } });
+    if (res.isConfirmed) { await updateDoc(doc(db, "teams", teamId), { members: res.value }); showToast('✅ Membres mis à jour'); await loadTeams(); }
   };
 
   async function loadTeams() {
@@ -815,36 +995,17 @@
 
   function renderTeams() {
     const list = document.getElementById('teams-list');
-    if (allTeams.length === 0) {
-      list.innerHTML = '<div class="empty-quota"><span>👥</span>Aucune équipe créée</div>';
-      return;
-    }
+    if (allTeams.length === 0) { list.innerHTML = '<div class="empty-quota"><span>👥</span>Aucune équipe créée</div>'; return; }
     list.innerHTML = '';
     allTeams.forEach(team => {
       const memberCount = (team.members || []).length;
-      const item = document.createElement('div');
-      item.className = 'team-item';
-      item.innerHTML = `
-        <div class="team-dot" style="background:${team.color};"></div>
-        <span class="team-name">${team.name}</span>
-        <span class="team-count">${memberCount} membre${memberCount > 1 ? 's' : ''}</span>`;
-
-      const editBtn = document.createElement('button');
-      editBtn.className = 'btn-del';
-      editBtn.textContent = '✏️';
-      editBtn.title = 'Gérer les membres';
-      editBtn.style.color = 'var(--ink-soft)';
+      const item = document.createElement('div'); item.className = 'team-item';
+      item.innerHTML = `<div class="team-dot" style="background:${team.color};"></div><span class="team-name">${team.name}</span><span class="team-count">${memberCount} membre${memberCount>1?'s':''}</span>`;
+      const editBtn = document.createElement('button'); editBtn.className = 'btn-del'; editBtn.textContent = '✏️'; editBtn.title = 'Gérer les membres'; editBtn.style.color = 'var(--ink-soft)';
       editBtn.onclick = (e) => { e.stopPropagation(); window.editTeamMembers(team.id); };
-
-      const delBtn = document.createElement('button');
-      delBtn.className = 'btn-del';
-      delBtn.textContent = '✕';
-      delBtn.title = 'Supprimer';
+      const delBtn = document.createElement('button'); delBtn.className = 'btn-del'; delBtn.textContent = '✕'; delBtn.title = 'Supprimer';
       delBtn.onclick = (e) => { e.stopPropagation(); window.deleteTeam(team.id); };
-
-      item.appendChild(editBtn);
-      item.appendChild(delBtn);
-      list.appendChild(item);
+      item.appendChild(editBtn); item.appendChild(delBtn); list.appendChild(item);
     });
   }
 
@@ -855,8 +1016,9 @@
         <p style="margin-bottom:12px;"><strong>1. Configurez vos types</strong><br>Ouvrez ⚙️ Types de congés, créez vos types (CP, RTT…) avec leur quota annuel.</p>
         <p style="margin-bottom:12px;"><strong>2. Posez vos jours</strong><br>Sélectionnez un type, la durée, puis la période et enregistrez.</p>
         <p style="margin-bottom:12px;"><strong>3. Supprimer un jour</strong><br>Cliquez sur un événement du calendrier.</p>
-        <p style="margin-bottom:12px;"><strong>4. Équipes</strong><br>Créez des équipes dans 👥 Gestion des équipes, ajoutez des membres, puis filtrez dans le Planning Collectif.</p>
-        <p><strong>5. Planning collectif</strong><br>Cliquez sur 👥 Planning Collectif pour voir les absences filtrées par équipe.</p>
+        <p style="margin-bottom:12px;"><strong>4. Modifier votre profil</strong><br>Cliquez sur votre nom en haut à droite pour changer votre nom ou mot de passe.</p>
+        <p style="margin-bottom:12px;"><strong>5. Équipes</strong><br>Créez des équipes dans 👥 Gestion des équipes, ajoutez des membres.</p>
+        <p><strong>6. Planning collectif</strong><br>Cliquez sur 👥 Planning Collectif pour voir les absences filtrées par équipe.</p>
       </div>`,
       confirmButtonText: 'Compris !', confirmButtonColor: 'var(--accent)'
     });
@@ -866,12 +1028,7 @@
     const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),n=Math.floor((h+l-7*m+114)/31),p=(h+l-7*m+114)%31;
     const paques=new Date(y,n-1,p+1);
     const add=(date,nb)=>{let r=new Date(date);r.setDate(r.getDate()+nb);return fmtDate(r);};
-    return {
-      [`${y}-01-01`]:"Jour de l'An",[add(paques,1)]:"Lundi de Pâques",[`${y}-05-01`]:"Fête du Travail",
-      [`${y}-05-08`]:"Victoire 1945",[add(paques,39)]:"Ascension",[add(paques,50)]:"Pentecôte",
-      [`${y}-07-14`]:"Fête Nationale",[`${y}-08-15`]:"Assomption",[`${y}-11-01`]:"Toussaint",
-      [`${y}-11-11`]:"Armistice",[`${y}-12-25`]:"Noël"
-    };
+    return{[`${y}-01-01`]:"Jour de l'An",[add(paques,1)]:"Lundi de Pâques",[`${y}-05-01`]:"Fête du Travail",[`${y}-05-08`]:"Victoire 1945",[add(paques,39)]:"Ascension",[add(paques,50)]:"Pentecôte",[`${y}-07-14`]:"Fête Nationale",[`${y}-08-15`]:"Assomption",[`${y}-11-01`]:"Toussaint",[`${y}-11-11`]:"Armistice",[`${y}-12-25`]:"Noël"};
   }
 
   function showToast(msg, type='ok') {
@@ -880,6 +1037,7 @@
     document.body.appendChild(t); setTimeout(() => t.remove(), 2800);
   }
 
+  // ── AUTH STATE ──
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       document.getElementById('auth-screen').style.display = 'none';
@@ -911,8 +1069,7 @@
           const res = await Swal.fire({ title:'Supprimer ce jour ?', html:`<span style="color:var(--ink-soft)">${info.event.title} · ${info.event.startStr}</span>`, icon:'question', showCancelButton:true, confirmButtonColor:'var(--danger)', cancelButtonColor:'var(--ink-soft)', confirmButtonText:'Supprimer', cancelButtonText:'Annuler' });
           if (res.isConfirmed) {
             userData.leaves = userData.leaves.filter(l => !(l.start === info.event.startStr && l.title === info.event.title));
-            await setDoc(doc(db, "users", auth.currentUser.uid), userData);
-            showToast('🗑 Jour supprimé');
+            await setDoc(doc(db, "users", auth.currentUser.uid), userData); showToast('🗑 Jour supprimé');
           }
         }
       });
