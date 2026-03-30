@@ -16,7 +16,6 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <style>
-    /* ── RESET & TOKENS ─────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -47,7 +46,7 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ── AUTH SCREEN ────────────────────────────────────────── */
+    /* ── AUTH SCREEN ── */
     #auth-screen {
       display: flex;
       align-items: center;
@@ -181,14 +180,13 @@
     .btn-primary:hover { background: var(--accent-h); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,110,247,.3); }
     .btn-primary:active { transform: translateY(0); }
 
-    /* ── MAIN APP ───────────────────────────────────────────── */
+    /* ── MAIN APP ── */
     #main-app {
       display: none;
       height: 100vh;
       flex-direction: column;
     }
 
-    /* TOP NAV */
     .topbar {
       height: 60px;
       background: var(--surface);
@@ -213,7 +211,6 @@
     }
 
     .topbar-brand span { font-size: 1.2em; }
-
     .topbar-spacer { flex: 1; }
 
     .user-chip {
@@ -259,14 +256,30 @@
 
     .btn-icon:hover { border-color: var(--accent); color: var(--accent); background: rgba(79,110,247,.05); }
 
-    /* LAYOUT */
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: .85em;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: var(--transition);
+    }
+
+    .nav-link:hover { opacity: .85; transform: translateY(-1px); }
+
     .workspace {
       display: flex;
       flex: 1;
       overflow: hidden;
     }
 
-    /* PANEL */
     .panel {
       width: 320px;
       min-width: 320px;
@@ -291,7 +304,6 @@
       margin-bottom: 12px;
     }
 
-    /* QUOTA CARDS */
     .quota-grid { display: flex; flex-direction: column; gap: 8px; }
 
     .quota-card {
@@ -340,7 +352,6 @@
       transition: width .4s ease;
     }
 
-    /* FORM */
     .form-row { margin-bottom: 14px; }
 
     .form-label {
@@ -372,7 +383,6 @@
       box-shadow: 0 0 0 3px rgba(79,110,247,.10);
     }
 
-    /* DATE ROW */
     .date-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -381,7 +391,6 @@
 
     .date-row.single { grid-template-columns: 1fr; }
 
-    /* TYPE SELECTOR */
     .type-selector {
       display: flex;
       flex-direction: column;
@@ -413,7 +422,6 @@
     .type-option-name { flex: 1; font-weight: 500; font-size: .88em; }
     .type-option-remain { font-size: .78em; color: var(--ink-soft); font-weight: 600; }
 
-    /* DURATION PILLS */
     .duration-row {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -436,7 +444,6 @@
     .dur-pill:hover { border-color: var(--ink-faint); color: var(--ink); }
     .dur-pill.selected { border-color: var(--accent); background: rgba(79,110,247,.08); color: var(--accent); }
 
-    /* SUBMIT BUTTON */
     .btn-submit {
       width: 100%;
       padding: 13px;
@@ -458,7 +465,6 @@
     .btn-submit:hover { background: #1e2332; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,.15); }
     .btn-submit:active { transform: translateY(0); }
 
-    /* CONFIG SECTION */
     .config-toggle {
       display: flex;
       align-items: center;
@@ -594,7 +600,6 @@
 
     .btn-danger:hover { background: rgba(239,68,68,.15); }
 
-    /* CALENDAR AREA */
     .calendar-area {
       flex: 1;
       overflow-y: auto;
@@ -661,10 +666,8 @@
     }
 
     .fc-event-title { color: #fff !important; }
-
     .fc-daygrid-event-dot { display: none !important; }
 
-    /* EMPTY STATE */
     .empty-quota {
       padding: 20px;
       text-align: center;
@@ -674,7 +677,6 @@
 
     .empty-quota span { display: block; font-size: 2em; margin-bottom: 8px; }
 
-    /* INFO TEXT INPUT */
     #custom-info-text {
       width: 100%;
       padding: 10px 12px;
@@ -694,12 +696,10 @@
       box-shadow: 0 0 0 3px rgba(79,110,247,.10);
     }
 
-    /* SCROLLBAR */
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--ink-faint); border-radius: 3px; }
 
-    /* NOTIFICATION TOAST */
     .toast {
       position: fixed;
       bottom: 24px;
@@ -723,14 +723,6 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* RESPONSIVE */
-    @media (max-width: 768px) {
-      .panel { width: 100%; min-width: unset; border-right: none; border-bottom: 1px solid var(--border); height: auto; max-height: 50vh; }
-      .workspace { flex-direction: column; }
-      .calendar-area { padding: 12px; }
-      .fc { padding: 10px; }
-    }
-
     .fc-event-ferie {
       cursor: default !important;
       pointer-events: none;
@@ -738,16 +730,22 @@
       opacity: .85;
     }
 
-    /* SweetAlert custom */
     .swal2-popup { border-radius: 16px !important; font-family: 'DM Sans', sans-serif !important; }
     .swal2-title { font-family: 'DM Serif Display', serif !important; font-weight: 400 !important; }
     .swal2-confirm { border-radius: 8px !important; font-family: 'DM Sans', sans-serif !important; font-weight: 700 !important; }
     .swal2-cancel { border-radius: 8px !important; font-family: 'DM Sans', sans-serif !important; font-weight: 700 !important; }
+
+    @media (max-width: 768px) {
+      .panel { width: 100%; min-width: unset; border-right: none; border-bottom: 1px solid var(--border); height: auto; max-height: 50vh; }
+      .workspace { flex-direction: column; }
+      .calendar-area { padding: 12px; }
+      .fc { padding: 10px; }
+    }
   </style>
 </head>
 <body>
 
-<!-- ── AUTH ──────────────────────────────────────────────────── -->
+<!-- ── AUTH ── -->
 <div id="auth-screen">
   <div class="auth-card">
     <div class="auth-header">
@@ -759,6 +757,11 @@
       <div class="auth-tabs">
         <div class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Connexion</div>
         <div class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">Inscription</div>
+      </div>
+      <!-- Champ nom (inscription uniquement) -->
+      <div class="field" id="name-field" style="display:none;">
+        <label>Prénom & Nom</label>
+        <input type="text" id="display-name" placeholder="Jean Dupont" autocomplete="name">
       </div>
       <div class="field">
         <label>Email</label>
@@ -773,18 +776,20 @@
   </div>
 </div>
 
-<!-- ── APP ───────────────────────────────────────────────────── -->
+<!-- ── APP ── -->
 <div id="main-app">
-  <!-- TOPBAR -->
   <div class="topbar">
     <div class="topbar-brand">
       <span>🌴</span> Congés
     </div>
     <div class="topbar-spacer"></div>
-    <a href="planning.html" style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); font-family: inherit; font-size: .85em; font-weight: 600; cursor: pointer; text-decoration: none; transition: var(--transition);" onmouseover="this.style.background='var(--accent-h)'" onmouseout="this.style.background='var(--accent)'">
+    <a href="planning.html" class="nav-link" style="background: var(--accent);">
       📅 Planning Annuel
     </a>
-    <button class="btn-icon" id="help-btn" title="Aide" onclick="showHelp()">?</button>
+    <a href="collectif.html" class="nav-link" style="background: #7c3aed;">
+      👥 Planning Collectif
+    </a>
+    <button class="btn-icon" title="Aide" onclick="showHelp()">?</button>
     <div class="user-chip">
       <div class="user-avatar" id="user-avatar-initials"></div>
       <span id="user-display"></span>
@@ -793,7 +798,6 @@
   </div>
 
   <div class="workspace">
-    <!-- PANEL GAUCHE -->
     <div class="panel">
 
       <!-- COMPTEURS -->
@@ -811,24 +815,21 @@
       <div class="panel-section">
         <div class="section-title">Poser des jours</div>
 
-        <!-- Type de congé -->
         <div class="form-row">
           <div class="form-label">Type</div>
           <div class="type-selector" id="type-selector">
-            <div class="type-option" data-value="INFO_LIBRE" onclick="selectType('INFO_LIBRE', this)" style="border-color: var(--border);">
+            <div class="type-option" data-value="INFO_LIBRE" onclick="selectType('INFO_LIBRE', this)">
               <div class="type-option-dot" style="background:#9ca3af;"></div>
               <span class="type-option-name">💡 Information libre</span>
             </div>
           </div>
         </div>
 
-        <!-- Champ texte info libre -->
         <div class="form-row" id="custom-info-group" style="display:none;">
           <div class="form-label">Titre</div>
           <input type="text" id="custom-info-text" placeholder="Ex : Formation, Présentiel…">
         </div>
 
-        <!-- Durée -->
         <div class="form-row">
           <div class="form-label">Durée</div>
           <div class="duration-row">
@@ -838,7 +839,6 @@
           </div>
         </div>
 
-        <!-- Dates -->
         <div class="form-row">
           <div class="form-label" id="dates-label">Période</div>
           <div class="date-row" id="date-row">
@@ -858,11 +858,9 @@
         </button>
       </div>
 
-      <!-- CONFIG (collapsible) -->
+      <!-- CONFIG -->
       <div class="config-toggle" id="config-toggle" onclick="toggleConfig()">
-        <div class="config-toggle-label">
-          ⚙️ Configuration
-        </div>
+        <div class="config-toggle-label">⚙️ Configuration</div>
         <span class="chevron" id="config-chevron">▼</span>
       </div>
 
@@ -882,14 +880,12 @@
 
     </div>
 
-    <!-- CALENDRIER -->
     <div class="calendar-area">
       <div id="calendar"></div>
     </div>
   </div>
 </div>
 
-<!-- ── SCRIPTS ───────────────────────────────────────────────── -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -910,11 +906,9 @@
   let calendar;
   let userData = { leaves: [], config: {} };
 
-  /* ── STATE UI ── */
   let selectedType = null;
   let selectedDuration = 'full';
 
-  /* ── UTILITAIRE : format date local YYYY-MM-DD sans décalage UTC ── */
   function fmtDate(d) {
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -922,23 +916,36 @@
     return `${y}-${m}-${j}`;
   }
 
-  /* Expose to global for inline handlers */
+  /* ── AUTH ── */
+  window.switchAuthTab = (mode) => {
+    document.getElementById('tab-login').classList.toggle('active', mode==='login');
+    document.getElementById('tab-signup').classList.toggle('active', mode==='signup');
+    document.getElementById('auth-btn').textContent = mode==='login' ? 'Se connecter' : 'Créer mon compte';
+    document.getElementById('name-field').style.display = mode==='signup' ? 'block' : 'none';
+  };
+
   window.doAuth = async () => {
     const e = document.getElementById('email').value;
     const p = document.getElementById('password').value;
     const isLogin = document.getElementById('tab-login').classList.contains('active');
     try {
-      if (isLogin) await signInWithEmailAndPassword(auth, e, p);
-      else await createUserWithEmailAndPassword(auth, e, p);
+      if (isLogin) {
+        await signInWithEmailAndPassword(auth, e, p);
+      } else {
+        const nameVal = document.getElementById('display-name').value.trim();
+        if (!nameVal) {
+          return Swal.fire({ icon:'warning', title:'Nom requis', text:'Veuillez entrer votre prénom et nom.', confirmButtonColor:'var(--accent)' });
+        }
+        const cred = await createUserWithEmailAndPassword(auth, e, p);
+        await setDoc(doc(db, "users", cred.user.uid), {
+          leaves: [],
+          config: {},
+          displayName: nameVal
+        });
+      }
     } catch(err) {
-      Swal.fire({ icon:'error', title:'Erreur', text: err.message, confirmButtonColor:'var(--accent)', customClass:{popup:'swal2-popup', title:'swal2-title'} });
+      Swal.fire({ icon:'error', title:'Erreur', text: err.message, confirmButtonColor:'var(--accent)' });
     }
-  };
-
-  window.switchAuthTab = (mode) => {
-    document.getElementById('tab-login').classList.toggle('active', mode==='login');
-    document.getElementById('tab-signup').classList.toggle('active', mode==='signup');
-    document.getElementById('auth-btn').textContent = mode==='login' ? 'Se connecter' : 'Créer mon compte';
   };
 
   window.doLogout = async () => {
@@ -1013,8 +1020,6 @@
 
     if (selectedDuration !== 'full') {
       const suffix = selectedDuration === 'am' ? ' (Matin)' : ' (Apr-Midi)';
-      // Pour demi-journée : on utilise directement la chaîne "start" (YYYY-MM-DD)
-      // sans passer par new Date() pour éviter le décalage UTC
       userData.leaves.push({
         title: baseTitle + suffix,
         start,
@@ -1024,21 +1029,17 @@
         value: 0.5
       });
     } else {
-      // ── CORRECTION FUSEAU HORAIRE ──
-      // On décompose la chaîne YYYY-MM-DD manuellement pour éviter
-      // que new Date('YYYY-MM-DD') l'interprète en UTC et décale d'un jour
       const [sy, sm, sd] = start.split('-').map(Number);
       const [ey, em, ed] = (end || start).split('-').map(Number);
-
-      let cur = new Date(sy, sm - 1, sd);       // date locale, pas UTC
-      const last = new Date(ey, em - 1, ed);    // date locale, pas UTC
+      let cur = new Date(sy, sm - 1, sd);
+      const last = new Date(ey, em - 1, ed);
 
       while (cur <= last) {
         const day = cur.getDay();
-        if (day !== 0 && day !== 6) {            // ignorer samedi & dimanche
+        if (day !== 0 && day !== 6) {
           userData.leaves.push({
             title: baseTitle,
-            start: fmtDate(cur),                 // ← format local, pas toISOString()
+            start: fmtDate(cur),
             backgroundColor: color,
             borderColor: 'transparent',
             isCustom,
@@ -1068,11 +1069,15 @@
         </p>
         <p style="margin-bottom:12px;">
           <strong>2. Posez vos jours</strong><br>
-          Sélectionnez un type, choisissez la durée (journée, matin ou après-midi), puis choisissez votre période et enregistrez. Les week-ends sont ignorés automatiquement.
+          Sélectionnez un type, choisissez la durée, puis la période et enregistrez. Les week-ends sont ignorés.
         </p>
-        <p>
+        <p style="margin-bottom:12px;">
           <strong>3. Supprimer un jour</strong><br>
           Cliquez sur un événement du calendrier pour le supprimer.
+        </p>
+        <p>
+          <strong>4. Planning collectif</strong><br>
+          Cliquez sur 👥 Planning Collectif pour voir les absences de tous les collaborateurs.
         </p>
       </div>`,
       confirmButtonText: 'Compris !',
@@ -1100,7 +1105,6 @@
     };
   }
 
-  /* ── TOAST ── */
   function showToast(msg, type='ok') {
     const t = document.createElement('div');
     t.className = 'toast';
@@ -1117,9 +1121,6 @@
       const mainApp = document.getElementById('main-app');
       mainApp.style.display = 'flex';
       mainApp.style.flexDirection = 'column';
-      const shortEmail = user.email.split('@')[0];
-      document.getElementById('user-display').textContent = shortEmail;
-      document.getElementById('user-avatar-initials').textContent = shortEmail[0].toUpperCase();
       initApp(user.uid);
     } else {
       document.getElementById('auth-screen').style.display = 'flex';
@@ -1179,8 +1180,27 @@
     onSnapshot(doc(db, "users", uid), (snap) => {
       if (snap.exists()) {
         userData = snap.data();
+
+        // Corriger displayName pour les anciens comptes
+        const email = auth.currentUser.email;
+        const emailName = email ? email.split('@')[0] : 'Utilisateur';
+        const currentName = userData.displayName || '';
+        const looksLikeUID = /^[a-zA-Z0-9]{20,}$/.test(currentName);
+
+        if (!currentName || looksLikeUID) {
+          userData.displayName = emailName;
+          setDoc(doc(db, "users", uid), userData);
+        }
+
+        // Afficher le nom dans la topbar
+        const displayName = userData.displayName || emailName;
+        document.getElementById('user-display').textContent = displayName;
+        document.getElementById('user-avatar-initials').textContent = displayName.substring(0, 2).toUpperCase();
+
         refreshUI();
       } else {
+        const email = auth.currentUser.email;
+        userData.displayName = email ? email.split('@')[0] : 'Utilisateur';
         setDoc(doc(db, "users", uid), userData);
       }
     });
@@ -1195,7 +1215,6 @@
     quotasEl.innerHTML = '';
     adminList.innerHTML = '';
 
-    /* Rebuild type-selector */
     typeSel.innerHTML = `
       <div class="type-option${selectedType==='INFO_LIBRE'?' selected':''}" data-value="INFO_LIBRE" onclick="selectType('INFO_LIBRE', this)">
         <div class="type-option-dot" style="background:#9ca3af;"></div>
@@ -1216,7 +1235,6 @@
       const rem = cfg.quota - used;
       const pct = Math.min(100, (used / cfg.quota) * 100);
 
-      /* Quota card */
       const card = document.createElement('div');
       card.className = 'quota-card';
       card.innerHTML = `
@@ -1231,7 +1249,6 @@
         </div>`;
       quotasEl.appendChild(card);
 
-      /* Type selector option */
       const isSelected = selectedType === t;
       typeSel.innerHTML += `
         <div class="type-option${isSelected?' selected':''}" data-value="${t}" onclick="selectType('${t}', this)">
@@ -1240,7 +1257,6 @@
           <span class="type-option-remain">${Number(rem.toFixed(1))}j</span>
         </div>`;
 
-      /* Admin row */
       const row = document.createElement('div');
       row.className = 'type-list-item';
       row.innerHTML = `
@@ -1255,7 +1271,6 @@
       adminList.appendChild(row);
     });
 
-    /* Refresh calendar */
     if (calendar) {
       calendar.removeAllEvents();
       calendar.addEventSource(userData.leaves || []);
@@ -1282,7 +1297,6 @@
     }
   }
 
-  /* Enter key on auth */
   ['email','password'].forEach(id => {
     document.getElementById(id).addEventListener('keydown', e => {
       if (e.key === 'Enter') window.doAuth();
