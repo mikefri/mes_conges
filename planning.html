@@ -39,7 +39,6 @@
       overflow: hidden;
     }
 
-    /* LOADING */
     #loading-screen {
       display: flex;
       align-items: center;
@@ -58,19 +57,15 @@
       animation: spin 0.8s linear infinite;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* MAIN */
-    #main-app { 
-      display: none; 
-      height: 100vh; 
+    #main-app {
+      display: none;
+      height: 100vh;
       flex-direction: column;
       overflow: hidden;
     }
 
-    /* TOPBAR */
     .topbar {
       height: 55px;
       background: var(--surface);
@@ -93,7 +88,6 @@
     }
 
     .topbar-brand span { font-size: 1.2em; }
-
     .topbar-spacer { flex: 1; }
 
     .year-nav {
@@ -165,7 +159,6 @@
 
     .btn-export:hover { opacity: .85; }
 
-    /* PLANNING CONTAINER */
     .planning-container {
       flex: 1;
       display: flex;
@@ -184,7 +177,6 @@
       height: 100%;
     }
 
-    /* HEADER */
     .planning-header {
       display: grid;
       grid-template-columns: 45px repeat(12, 1fr);
@@ -211,8 +203,7 @@
       font-weight: 800;
     }
 
-    /* BODY */
-    .planning-body { 
+    .planning-body {
       flex: 1;
       display: flex;
       flex-direction: column;
@@ -252,7 +243,6 @@
 
     .planning-month-col:last-child { border-right: none; }
 
-    /* EVENTS */
     .event-bar {
       position: absolute;
       top: 50%;
@@ -282,7 +272,6 @@
       z-index: 5;
     }
 
-    /* HOLIDAYS - fond gris avec texte */
     .holiday-marker {
       position: absolute;
       top: 0;
@@ -306,7 +295,6 @@
       pointer-events: none;
     }
 
-    /* WEEKEND SHADING */
     .weekend-shade {
       position: absolute;
       top: 0;
@@ -316,7 +304,6 @@
       pointer-events: none;
     }
 
-    /* LEGEND */
     .legend {
       display: flex;
       gap: 12px;
@@ -351,7 +338,6 @@
       border-radius: 3px;
     }
 
-    /* ZOOM CONTROLS */
     .zoom-controls {
       display: flex;
       gap: 8px;
@@ -376,7 +362,6 @@
       background: rgba(79,110,247,.05);
     }
 
-    /* PRINT */
     @media print {
       body { overflow: visible; }
       .topbar { display: none; }
@@ -391,13 +376,11 @@
 </head>
 <body>
 
-<!-- LOADING -->
 <div id="loading-screen">
   <div class="spinner"></div>
   <p style="color:var(--ink-soft); font-weight:500;">Chargement du planning…</p>
 </div>
 
-<!-- MAIN -->
 <div id="main-app">
   <div class="topbar">
     <div class="topbar-brand">
@@ -473,7 +456,6 @@
   let currentYear = new Date().getFullYear();
   let zoomLevel = 1.0;
 
-  /* ── CORRECTION FUSEAU HORAIRE : format date locale YYYY-MM-DD ── */
   function fmtDate(d) {
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -504,16 +486,10 @@
     setTimeout(() => window.print(), 500);
   };
 
-  /* ── JOURS FÉRIÉS ── CORRECTION : utilise fmtDate() au lieu de toISOString() ── */
   function getHolidays(y) {
     const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),n=Math.floor((h+l-7*m+114)/31),p=(h+l-7*m+114)%31;
-    const paques = new Date(y, n - 1, p + 1); // constructeur local, pas UTC
-    // ── add() utilise maintenant fmtDate() pour éviter le décalage UTC ──
-    const add = (date, nb) => {
-      const r = new Date(date);
-      r.setDate(r.getDate() + nb);
-      return fmtDate(r); // ← corrigé : était toISOString().split('T')[0]
-    };
+    const paques = new Date(y, n - 1, p + 1);
+    const add = (date, nb) => { const r = new Date(date); r.setDate(r.getDate() + nb); return fmtDate(r); };
     return {
       [`${y}-01-01`]: "Jour de l'An",
       [add(paques, 1)]:  "Lundi de Pâques",
@@ -529,7 +505,6 @@
     };
   }
 
-  /* ── RENDER PLANNING ── */
   function renderPlanning() {
     const body = document.getElementById('planning-body');
     body.innerHTML = '';
@@ -537,12 +512,10 @@
     const holidays = getHolidays(currentYear);
     const holidayDates = Object.keys(holidays);
 
-    // Group leaves by day (1-31)
     const dayRows = {};
     for (let day = 1; day <= 31; day++) dayRows[day] = [];
 
     (userData.leaves || []).forEach(leave => {
-      // Décomposition locale pour éviter le décalage UTC
       const [sy, sm, sd] = leave.start.split('-').map(Number);
       const d = new Date(sy, sm - 1, sd);
       if (d.getFullYear() === currentYear) {
@@ -552,7 +525,6 @@
       }
     });
 
-    // Render 31 rows
     for (let day = 1; day <= 31; day++) {
       const row = document.createElement('div');
       row.className = 'planning-row';
@@ -562,31 +534,26 @@
       label.textContent = day;
       row.appendChild(label);
 
-      // 12 months
       for (let month = 0; month < 12; month++) {
         const col = document.createElement('div');
         col.className = 'planning-month-col';
 
-        // Construire la date localement (pas via new Date('YYYY-MM-DD') qui est UTC)
         const dateObj = new Date(currentYear, month, day);
 
-        // Date inexistante dans ce mois (ex: 31 février)
         if (dateObj.getMonth() !== month || dateObj.getDate() !== day) {
           row.appendChild(col);
           continue;
         }
 
         const dateStr = fmtDate(dateObj);
-
-        // Weekend shading
         const dayOfWeek = dateObj.getDay();
+
         if (dayOfWeek === 0 || dayOfWeek === 6) {
           const shade = document.createElement('div');
           shade.className = 'weekend-shade';
           col.appendChild(shade);
         }
 
-        // Jour férié — fond gris + nom affiché
         if (holidayDates.includes(dateStr)) {
           const hmark = document.createElement('div');
           hmark.className = 'holiday-marker';
@@ -595,9 +562,7 @@
           col.appendChild(hmark);
         }
 
-        // Leave events (par dessus le fond férié si nécessaire)
         const leavesOnThisDay = dayRows[day].filter(l => l.date.getMonth() === month);
-
         leavesOnThisDay.forEach(leave => {
           const bar = document.createElement('div');
           bar.className = 'event-bar';
@@ -624,7 +589,6 @@
 
   function renderLegend() {
     const leg = document.getElementById('legend-items');
-    // Garder le premier item "Jour férié" et reconstruire les types
     leg.innerHTML = `
       <div class="legend-item">
         <div class="legend-dot" style="background:#e5e7eb; border:1px solid #d1d5db;"></div>
@@ -634,9 +598,7 @@
     const types = {};
     (userData.leaves || []).forEach(l => {
       const baseTitle = l.title.replace(/ \(Matin\)| \(Apr-Midi\)/g, '');
-      if (!types[baseTitle]) {
-        types[baseTitle] = { color: l.backgroundColor || '#9ca3af' };
-      }
+      if (!types[baseTitle]) types[baseTitle] = { color: l.backgroundColor || '#9ca3af' };
     });
 
     Object.keys(types).forEach(name => {
@@ -649,7 +611,6 @@
     });
   }
 
-  /* ── AUTH ── */
   onAuthStateChanged(auth, (user) => {
     if (user) {
       onSnapshot(doc(db, "users", user.uid), (snap) => {
